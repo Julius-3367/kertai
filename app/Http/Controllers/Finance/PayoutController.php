@@ -47,7 +47,13 @@ class PayoutController extends Controller
             'payouts' => $payouts,
             'filters' => ['status' => $status],
             'funds' => Account::query()->where('kind', 'fund')->where('is_active', true)->orderBy('code')->get()
-                ->map(fn (Account $a) => ['id' => $a->id, 'label' => $a->name, 'per_member' => $a->isPerMember(), 'balance' => $a->isPerMember() ? null : $ledger->balance($a)]),
+                ->map(fn (Account $a) => [
+                    'id' => $a->id,
+                    'label' => $a->name,
+                    'purpose' => $a->purpose,
+                    'per_member' => $a->isPerMember(),
+                    'balance' => $a->isPerMember() ? null : $ledger->balance($a),
+                ]),
             'members' => $this->memberOptions(false),
             'types' => Payout::TYPES,
         ]);

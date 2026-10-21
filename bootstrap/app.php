@@ -47,7 +47,10 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         // A rule that blocked a button press goes back to the page as a
-        // red toast and a form error, never as an error page.
+        // red toast and a form error, never as an error page. It is an
+        // expected outcome, so it stays out of the error log.
+        $exceptions->dontReport(RuleViolation::class);
+
         $exceptions->render(function (RuleViolation $e, Request $request) {
             if ($request->expectsJson() || $request->is('webhooks/*')) {
                 return response()->json(['message' => $e->getMessage()], 422);

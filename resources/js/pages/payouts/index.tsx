@@ -59,6 +59,7 @@ export default function PayoutsIndex({
     funds: {
         id: number;
         label: string;
+        purpose: string;
         per_member: boolean;
         balance: number | null;
     }[];
@@ -85,9 +86,11 @@ export default function PayoutsIndex({
                                 wide
                                 initial={{
                                     type: 'expense',
+                                    // General expenses come out of the group
+                                    // fund; the official changes it on purpose.
                                     account_id: String(
-                                        funds.find((f) => !f.per_member)?.id ??
-                                            '',
+                                        funds.find((f) => f.purpose === 'group')
+                                            ?.id ?? '',
                                     ),
                                     amount: '',
                                     description: '',
