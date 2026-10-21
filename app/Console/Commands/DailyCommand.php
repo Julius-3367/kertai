@@ -8,6 +8,7 @@ use App\Domain\Dues\Actions\GenerateMonthlyDues;
 use App\Domain\Dues\Models\Due;
 use App\Domain\Groups\CurrentGroup;
 use App\Domain\Groups\Models\Group;
+use App\Domain\Meetings\Models\Meeting;
 use App\Domain\Members\Models\Member;
 use App\Domain\Notifications\Notifier;
 use App\Support\Money;
@@ -52,10 +53,36 @@ class DailyCommand extends Command
                 }
 
                 $this->remindCompliance($group, $today, $notifier);
+                $this->remindMeetingsToday($group, $today, $notifier);
             });
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Morning-of reminder with the time and, for online meetings, the link.
+     */
+    private function remindMeetingsToday(Group $group, CarbonImmutable $today, Notifier $notifier): void
+    {
+        $meetings = Meeting::query()
+            ->where('status', 'scheduled')
+            ->whereNull('reminded_at')
+            ->whereDate('scheduled_at', $today->toDateString())
+            ->get();
+
+        foreach ($meetings as $meeting) {
+            foreach (Member::query()->active()->get() as $member) {
+                $notifier->toMember($member, 'meeting_reminder', [
+                    'title' => $meeting->title,
+                    'time' => $meeting->scheduled_at->format('g:ia'),
+                    ...$meeting->messagePlaceholders(),
+                ], meta: ['meeting_id' => $meeting->id]);
+            }
+
+            $meeting->forceFill(['reminded_at' => now()])->save();
+            $this->line("{$group->name}: reminded members about {$meeting->title}");
+        }
     }
 
     private function remindDue(Group $group, CarbonImmutable $today, Notifier $notifier): void

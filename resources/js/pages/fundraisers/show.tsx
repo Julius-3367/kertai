@@ -118,16 +118,34 @@ export default function FundraiserShow({
                                     <Button
                                         variant="outline"
                                         onClick={() => {
+                                            // Phones open their share sheet
+                                            // (WhatsApp, SMS); computers copy.
+                                            if (navigator.share) {
+                                                void navigator
+                                                    .share({
+                                                        title: fundraiser.title,
+                                                        text: share,
+                                                    })
+                                                    .catch(() => undefined);
+
+                                                return;
+                                            }
+
                                             void navigator.clipboard
-                                                .writeText(share)
+                                                ?.writeText(share)
                                                 .then(() =>
                                                     toast.success(
                                                         'Link and message copied. Paste it in WhatsApp.',
                                                     ),
+                                                )
+                                                .catch(() =>
+                                                    toast.error(
+                                                        `Copy this link: ${fundraiser.public_url}`,
+                                                    ),
                                                 );
                                         }}
                                     >
-                                        <Copy /> Copy share message
+                                        <Copy /> Share
                                     </Button>
                                     <Button asChild variant="outline">
                                         <a

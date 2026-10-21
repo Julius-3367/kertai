@@ -17,6 +17,15 @@
                 {!! nl2br(e($body)) !!}
             </td>
         </tr>
+        @if (! empty($actions))
+            <tr>
+                <td style="padding:0 24px 24px;">
+                    @foreach ($actions as $action)
+                        <a href="{{ $action['url'] }}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 18px;border-radius:6px;background:{{ $loop->first ? '#047857' : '#ffffff' }};color:{{ $loop->first ? '#ffffff' : '#047857' }};border:1px solid #047857;font-size:14px;font-weight:bold;text-decoration:none;">{{ $action['label'] }}</a>
+                    @endforeach
+                </td>
+            </tr>
+        @endif
         <tr>
             <td style="padding:16px 24px;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;">
                 You are receiving this because you are a member of {{ $group?->name ?? config('app.name') }}.

@@ -1,5 +1,14 @@
 import { Head, useForm } from '@inertiajs/react';
-import { BellRing, Coins, Gavel, Plus, Trash2 } from 'lucide-react';
+import {
+    BellRing,
+    CalendarPlus,
+    Coins,
+    Download,
+    Gavel,
+    Plus,
+    Trash2,
+    Video,
+} from 'lucide-react';
 import { useState } from 'react';
 import {
     ActionButton,
@@ -15,6 +24,7 @@ import {
     Select,
     Textarea,
 } from '@/components/kertai/fields';
+import { OnlineMeetingFields } from '@/components/kertai/online-meeting-fields';
 import {
     EmptyState,
     Page,
@@ -49,6 +59,9 @@ type Props = {
         scheduled_at: string;
         scheduled_at_input: string;
         venue: string | null;
+        online_link: string | null;
+        duration_minutes: number;
+        google_calendar_url: string;
         agenda: string | null;
         minutes: string | null;
         status: string;
@@ -122,6 +135,45 @@ export default function MeetingShow({
                         )
                     }
                 />
+
+                {meeting.status === 'scheduled' && (
+                    <div className="flex flex-col gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 sm:flex-row sm:items-center sm:justify-between dark:border-emerald-900 dark:bg-emerald-950/40">
+                        <p className="text-sm">
+                            {meeting.online_link
+                                ? 'This meeting is online. Join from your phone or computer at the time.'
+                                : 'Add it to your calendar so your phone reminds you.'}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {meeting.online_link && (
+                                <Button asChild>
+                                    <a
+                                        href={meeting.online_link}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        <Video /> Join meeting
+                                    </a>
+                                </Button>
+                            )}
+                            <Button asChild variant="outline">
+                                <a
+                                    href={meeting.google_calendar_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    <CalendarPlus /> Add to Google Calendar
+                                </a>
+                            </Button>
+                            <Button asChild variant="outline">
+                                <a
+                                    href={`/meetings/${meeting.id}/calendar.ics`}
+                                >
+                                    <Download /> Calendar file
+                                </a>
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 <Tabs
                     value={tab}
@@ -328,6 +380,8 @@ function DetailsForm({
         kind: meeting.kind,
         scheduled_at: meeting.scheduled_at_input,
         venue: meeting.venue ?? '',
+        online_link: meeting.online_link ?? '',
+        duration_minutes: String(meeting.duration_minutes),
         agenda: meeting.agenda ?? '',
         minutes: meeting.minutes ?? '',
         status: meeting.status,
@@ -426,6 +480,16 @@ function DetailsForm({
                             }
                         />
                     </Field>
+                </div>
+                <div className="mt-4 grid gap-4 sm:grid-cols-[3fr_1fr]">
+                    <OnlineMeetingFields
+                        idPrefix="md"
+                        link={form.data.online_link}
+                        duration={form.data.duration_minutes}
+                        onLink={(v) => form.setData('online_link', v)}
+                        onDuration={(v) => form.setData('duration_minutes', v)}
+                        linkError={form.errors.online_link}
+                    />
                 </div>
             </Section>
             <div className="grid gap-6 lg:grid-cols-2">

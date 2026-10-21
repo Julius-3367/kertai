@@ -10,7 +10,7 @@ namespace App\Domain\Notifications;
 final class DefaultTemplates
 {
     /** Keys a member can switch off with "reminders off". Everything else always goes. */
-    public const REMINDERS = ['contribution_reminder', 'arrears_reminder', 'meeting_notice', 'mgr_turn'];
+    public const REMINDERS = ['contribution_reminder', 'arrears_reminder', 'meeting_notice', 'meeting_reminder', 'mgr_turn'];
 
     /**
      * @return array<string, array{label: string, subject: string, en: string, sw: string}>
@@ -57,8 +57,14 @@ final class DefaultTemplates
             'meeting_notice' => [
                 'label' => 'Meeting notice',
                 'subject' => 'Meeting: {title} on {date}',
-                'en' => 'Dear {name}, {title} is on {date} at {venue}. Please attend. {group}',
-                'sw' => 'Mpendwa {name}, {title} itakuwa tarehe {date} katika {venue}. Tafadhali hudhuria. {group}',
+                'en' => 'Dear {name}, {title} is on {date} at {venue}. Please attend.{join} {group}',
+                'sw' => 'Mpendwa {name}, {title} itakuwa tarehe {date} katika {venue}. Tafadhali hudhuria.{join_sw} {group}',
+            ],
+            'meeting_reminder' => [
+                'label' => 'Meeting today',
+                'subject' => 'Today: {title} at {time}',
+                'en' => 'Reminder: {title} is today at {time}, {venue}.{join} {group}',
+                'sw' => 'Kumbusho: {title} ni leo saa {time}, {venue}.{join_sw} {group}',
             ],
             'welfare_levy' => [
                 'label' => 'Welfare levy raised',

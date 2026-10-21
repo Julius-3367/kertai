@@ -71,6 +71,7 @@ Route::middleware(['auth', 'member'])->group(function () {
     Route::get('fundraisers', [FundraiserController::class, 'index'])->name('fundraisers.index');
     Route::get('meetings', [MeetingController::class, 'index'])->name('meetings.index');
     Route::get('meetings/{meeting}', [MeetingController::class, 'show'])->name('meetings.show');
+    Route::get('meetings/{meeting}/calendar.ics', [MeetingController::class, 'calendar'])->name('meetings.calendar');
     Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::get('assets', [AssetController::class, 'index'])->name('assets.index');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Programmes;
 
 use App\Domain\Access\Permission;
 use App\Domain\Audit\Audit;
+use App\Domain\Meetings\MeetingCalendar;
 use App\Domain\Meetings\Models\Meeting;
 use App\Domain\Meetings\Models\MeetingAttendance;
 use App\Domain\Meetings\Models\Resolution;
@@ -17,8 +18,10 @@ use App\Support\RuleViolation;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,6 +38,7 @@ class MeetingController extends Controller
                     'kind' => $m->kind,
                     'scheduled_at' => $m->scheduled_at->toIso8601String(),
                     'venue' => $m->venue,
+                    'online_link' => $m->online_link,
                     'status' => $m->status,
                     'present' => (int) $m->getAttribute('present_count'),
                 ]),
@@ -61,7 +65,7 @@ class MeetingController extends Controller
         return to_route('meetings.show', $meeting);
     }
 
-    public function show(Request $request, Meeting $meeting): Response
+    public function show(Request $request, Meeting $meeting, MeetingCalendar $calendar): Response
     {
         $attendance = $meeting->attendances()->pluck('status', 'member_id');
 
@@ -74,6 +78,9 @@ class MeetingController extends Controller
                 'scheduled_at' => $meeting->scheduled_at->toIso8601String(),
                 'scheduled_at_input' => $meeting->scheduled_at->format('Y-m-d\TH:i'),
                 'venue' => $meeting->venue,
+                'online_link' => $meeting->online_link,
+                'duration_minutes' => $meeting->duration_minutes,
+                'google_calendar_url' => $calendar->googleLink($meeting, $this->group()),
                 'agenda' => $meeting->agenda,
                 'minutes' => $meeting->minutes,
                 'status' => $meeting->status,
@@ -167,8 +174,8 @@ class MeetingController extends Controller
             $count += count($notifier->toMember($member, 'meeting_notice', [
                 'title' => $meeting->title,
                 'date' => $meeting->scheduled_at->format('D j M, g:ia'),
-                'venue' => $meeting->venue ?? 'the usual venue',
-            ]));
+                ...$meeting->messagePlaceholders(),
+            ], meta: ['meeting_id' => $meeting->id]));
         }
 
         Audit::log('meeting.notified', "Notice for {$meeting->title} sent ({$count} messages)", $meeting);
@@ -233,12 +240,30 @@ class MeetingController extends Controller
      */
     private function validated(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'title' => ['required', 'string', 'max:150'],
             'kind' => ['required', Rule::in(array_keys(Meeting::KINDS))],
             'scheduled_at' => ['required', 'date'],
             'venue' => ['nullable', 'string', 'max:150'],
+            'online_link' => ['nullable', 'url:https', 'max:500'],
+            'duration_minutes' => ['nullable', 'integer', 'min:15', 'max:720'],
             'agenda' => ['nullable', 'string', 'max:5000'],
+        ], ['online_link.url' => 'Paste the full meeting link, starting with https://']);
+
+        $data['duration_minutes'] = (int) ($data['duration_minutes'] ?? 120);
+
+        return $data;
+    }
+
+    /**
+     * The calendar file for a meeting: opens in Google Calendar, Samsung
+     * Calendar or Outlook with reminders a day and an hour before.
+     */
+    public function calendar(Meeting $meeting, MeetingCalendar $calendar): HttpResponse
+    {
+        return response($calendar->ics($meeting, $this->group()), 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="'.Str::slug($meeting->title).'.ics"',
         ]);
     }
 

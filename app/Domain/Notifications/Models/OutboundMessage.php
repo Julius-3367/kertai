@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $subject
  * @property string $body
  * @property string|null $template_key
+ * @property array<string, mixed>|null $meta
  * @property string $status
  * @property string|null $provider
  * @property string|null $provider_message_id
@@ -33,7 +34,7 @@ class OutboundMessage extends Model
 
     protected function casts(): array
     {
-        return ['sent_at' => 'datetime'];
+        return ['sent_at' => 'datetime', 'meta' => 'array'];
     }
 
     /** @return BelongsTo<Member, $this> */

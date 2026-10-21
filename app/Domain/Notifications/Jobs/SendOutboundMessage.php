@@ -3,6 +3,8 @@
 namespace App\Domain\Notifications\Jobs;
 
 use App\Domain\Groups\Models\Group;
+use App\Domain\Meetings\MeetingCalendar;
+use App\Domain\Meetings\Models\Meeting;
 use App\Domain\Notifications\Email\EmailSender;
 use App\Domain\Notifications\Models\OutboundMessage;
 use App\Domain\Notifications\Sms\SmsManager;
@@ -44,7 +46,8 @@ final class SendOutboundMessage implements ShouldQueue
                 $message->provider = $driver->name();
                 $message->provider_message_id = $result->messageId;
             } else {
-                $message->provider = $email->send($group, $message->recipient, $message->subject ?? '', $message->body);
+                [$actions, $attachments] = $this->meetingExtras($message, $group);
+                $message->provider = $email->send($group, $message->recipient, $message->subject ?? '', $message->body, $actions, $attachments);
             }
 
             $message->status = 'sent';
@@ -72,6 +75,39 @@ final class SendOutboundMessage implements ShouldQueue
                 $this->release(self::BACKOFF[$message->attempts - 1] ?? 300);
             }
         }
+    }
+
+    /**
+     * Meeting emails get Join and Add-to-calendar buttons and the calendar
+     * file, built now so they reflect any change to the meeting.
+     *
+     * @return array{0: list<array{label: string, url: string}>, 1: list<array{name: string, data: string, mime: string}>}
+     */
+    private function meetingExtras(OutboundMessage $message, ?Group $group): array
+    {
+        $meetingId = (int) ($message->meta['meeting_id'] ?? 0);
+
+        if ($meetingId === 0 || $group === null) {
+            return [[], []];
+        }
+
+        $meeting = Meeting::withoutGlobalScopes()->whereKey($meetingId)->first();
+
+        if ($meeting === null) {
+            return [[], []];
+        }
+
+        $calendar = app(MeetingCalendar::class);
+        $actions = array_values(array_filter([
+            $meeting->online_link ? ['label' => 'Join the meeting', 'url' => $meeting->online_link] : null,
+            ['label' => 'Add to Google Calendar', 'url' => $calendar->googleLink($meeting, $group)],
+        ]));
+
+        return [$actions, [[
+            'name' => 'meeting.ics',
+            'data' => $calendar->ics($meeting, $group),
+            'mime' => 'text/calendar; charset=utf-8',
+        ]]];
     }
 
     /**

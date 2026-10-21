@@ -22,9 +22,10 @@ final class Notifier
      *
      * @param  array<string, string|int|null>  $data
      * @param  list<string>|null  $channels
+     * @param  array<string, mixed>  $meta  e.g. ['meeting_id' => 5] to attach its calendar file to emails
      * @return list<OutboundMessage>
      */
-    public function toMember(Member $member, string $key, array $data = [], ?array $channels = null): array
+    public function toMember(Member $member, string $key, array $data = [], ?array $channels = null, array $meta = []): array
     {
         if (in_array($key, DefaultTemplates::REMINDERS, true) && $member->reminders_opt_out) {
             return [];
@@ -55,6 +56,7 @@ final class Notifier
                 $this->render($template['body'], $data),
                 $member,
                 $key,
+                meta: $meta,
             );
         }
 
@@ -116,6 +118,9 @@ final class Notifier
         return $normalized ? $this->queue($group, 'sms', $normalized, null, $body, null, null) : null;
     }
 
+    /**
+     * @param  array<string, mixed>  $meta
+     */
     public function queue(
         Group $group,
         string $channel,
@@ -125,6 +130,7 @@ final class Notifier
         ?Member $member,
         ?string $templateKey,
         ?int $createdBy = null,
+        array $meta = [],
     ): OutboundMessage {
         $message = OutboundMessage::withoutGlobalScopes()->create([
             'group_id' => $group->id,
@@ -134,6 +140,7 @@ final class Notifier
             'subject' => $subject,
             'body' => $body,
             'template_key' => $templateKey,
+            'meta' => $meta ?: null,
             'status' => 'queued',
             'created_by' => $createdBy ?? auth()->id(),
         ]);

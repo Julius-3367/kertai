@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { FormDialog } from '@/components/kertai/actions';
 import { Field, Select, Textarea } from '@/components/kertai/fields';
+import { OnlineMeetingFields } from '@/components/kertai/online-meeting-fields';
 import {
     EmptyState,
     Page,
@@ -20,6 +21,7 @@ type Meeting = {
     kind: string;
     scheduled_at: string;
     venue: string | null;
+    online_link: string | null;
     status: string;
     present: number;
 };
@@ -69,6 +71,8 @@ export default function MeetingsIndex({
                                     kind: 'ordinary',
                                     scheduled_at: nextSaturday,
                                     venue: '',
+                                    online_link: '',
+                                    duration_minutes: '120',
                                     agenda: '',
                                 }}
                                 trigger={
@@ -149,6 +153,23 @@ export default function MeetingsIndex({
                                                 }
                                             />
                                         </Field>
+                                        <OnlineMeetingFields
+                                            idPrefix="mt"
+                                            link={form.data.online_link}
+                                            duration={
+                                                form.data.duration_minutes
+                                            }
+                                            onLink={(v) =>
+                                                form.setData('online_link', v)
+                                            }
+                                            onDuration={(v) =>
+                                                form.setData(
+                                                    'duration_minutes',
+                                                    v,
+                                                )
+                                            }
+                                            linkError={form.errors.online_link}
+                                        />
                                         <Field
                                             label="Agenda"
                                             htmlFor="mt-agenda"
@@ -202,7 +223,14 @@ export default function MeetingsIndex({
                                                 {kinds[m.kind] ?? m.kind}
                                             </div>
                                         </TD>
-                                        <TD>{m.venue ?? '—'}</TD>
+                                        <TD>
+                                            {[
+                                                m.venue,
+                                                m.online_link ? 'Online' : null,
+                                            ]
+                                                .filter(Boolean)
+                                                .join(' and ') || '—'}
+                                        </TD>
                                         <TD>{m.present || '—'}</TD>
                                         <TD>
                                             <StatusBadge status={m.status} />

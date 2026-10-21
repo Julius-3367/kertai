@@ -64,7 +64,7 @@ class DashboardController extends Controller
                 ->orderBy('scheduled_at')
                 ->limit(3)
                 ->get()
-                ->map(fn (Meeting $m) => ['id' => $m->id, 'title' => $m->title, 'scheduled_at' => $m->scheduled_at->toIso8601String(), 'venue' => $m->venue]),
+                ->map(fn (Meeting $m) => ['id' => $m->id, 'title' => $m->title, 'scheduled_at' => $m->scheduled_at->toIso8601String(), 'venue' => $m->venue, 'online_link' => $m->online_link]),
             'fundraisers' => Fundraiser::query()
                 ->where('status', 'active')
                 ->latest()

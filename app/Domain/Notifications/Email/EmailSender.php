@@ -16,7 +16,11 @@ final class EmailSender
 {
     public function __construct(private readonly IntegrationSettings $settings) {}
 
-    public function send(?Group $group, string $to, string $subject, string $body): string
+    /**
+     * @param  list<array{label: string, url: string}>  $actions  buttons under the text
+     * @param  list<array{name: string, data: string, mime: string}>  $attachments
+     */
+    public function send(?Group $group, string $to, string $subject, string $body, array $actions = [], array $attachments = []): string
     {
         $resolved = $this->settings->for($group?->id, 'email');
         $mailer = $this->configureMailer($resolved['driver'], $resolved['credentials']);
@@ -24,9 +28,13 @@ final class EmailSender
         $fromName = $resolved['credentials']['from_name'] ?? $group->name ?? config('mail.from.name');
 
         Mail::mailer($mailer)->html(
-            view('mail.message', ['body' => $body, 'group' => $group, 'subject' => $subject])->render(),
-            function (Message $message) use ($to, $subject, $from, $fromName) {
+            view('mail.message', ['body' => $body, 'group' => $group, 'subject' => $subject, 'actions' => $actions])->render(),
+            function (Message $message) use ($to, $subject, $from, $fromName, $attachments) {
                 $message->to($to)->subject($subject)->from($from, $fromName);
+
+                foreach ($attachments as $file) {
+                    $message->attachData($file['data'], $file['name'], ['mime' => $file['mime']]);
+                }
             },
         );
 

@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { CalendarDays, Megaphone, Smartphone } from 'lucide-react';
+import { CalendarDays, Megaphone, Smartphone, Video } from 'lucide-react';
 import { FormDialog } from '@/components/kertai/actions';
 import { Field, Select } from '@/components/kertai/fields';
 import {
@@ -59,6 +59,7 @@ type Props = {
         title: string;
         scheduled_at: string;
         venue: string | null;
+        online_link: string | null;
     }[];
     fundraisers: {
         id: number;
@@ -404,12 +405,15 @@ export default function Dashboard({
                         ) : (
                             <ul className="space-y-3">
                                 {meetings.map((m) => (
-                                    <li key={m.id}>
+                                    <li
+                                        key={m.id}
+                                        className="flex items-start justify-between gap-2"
+                                    >
                                         <Link
                                             href={`/meetings/${m.id}`}
-                                            className="flex items-start gap-3 rounded-lg p-2 hover:bg-muted/50"
+                                            className="flex min-w-0 flex-1 items-start gap-3 rounded-lg p-2 hover:bg-muted/50"
                                         >
-                                            <CalendarDays className="mt-0.5 size-4 text-muted-foreground" />
+                                            <CalendarDays className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                                             <div className="text-sm">
                                                 <div className="font-medium">
                                                     {m.title}
@@ -421,9 +425,27 @@ export default function Dashboard({
                                                     {m.venue
                                                         ? ` · ${m.venue}`
                                                         : ''}
+                                                    {m.online_link
+                                                        ? ' · online'
+                                                        : ''}
                                                 </div>
                                             </div>
                                         </Link>
+                                        {m.online_link && (
+                                            <Button
+                                                asChild
+                                                size="sm"
+                                                className="mt-1"
+                                            >
+                                                <a
+                                                    href={m.online_link}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    <Video /> Join
+                                                </a>
+                                            </Button>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
