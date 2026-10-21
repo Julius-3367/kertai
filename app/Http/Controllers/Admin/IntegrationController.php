@@ -44,7 +44,7 @@ class IntegrationController extends Controller
             $current[$kind] = [
                 'driver' => $resolved['driver'],
                 'source' => $resolved['source'],
-                'is_active' => $saved?->is_active ?? false,
+                'is_active' => $saved->is_active ?? false,
                 'values' => $values,
             ];
         }

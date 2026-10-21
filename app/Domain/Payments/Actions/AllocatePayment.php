@@ -50,7 +50,7 @@ final class AllocatePayment
             }
 
             $assetChannel = $payment->channel === 'manual' ? ($payment->meta['asset'] ?? 'bank') : $payment->channel;
-            $who = $member?->name ?? $payment->payer_name ?? $payment->phone ?? 'unknown payer';
+            $who = $member->name ?? $payment->payer_name ?? $payment->phone ?? 'unknown payer';
 
             $entry = $this->ledger->post(
                 "Payment from {$who} for {$payment->purposeLabel()}",
@@ -85,7 +85,7 @@ final class AllocatePayment
     }
 
     /**
-     * @return list<array<string, mixed>>|null
+     * @return array<int, array{account: Account, credit: int, member_id?: int|null, memo?: string|null}>|null
      */
     private function credits(Payment $payment, ?Member $member): ?array
     {
@@ -132,7 +132,7 @@ final class AllocatePayment
                     'entry_on' => now()->toDateString(),
                     'description' => $isIncome
                         ? ($payment->meta['description'] ?? 'Income from '.($payment->payer_name ?? 'buyer'))
-                        : 'Contribution from '.($member?->name ?? $payment->payer_name ?? 'non-member'),
+                        : 'Contribution from '.($member->name ?? $payment->payer_name ?? 'non-member'),
                     'member_id' => $member?->id,
                     'payment_id' => $payment->id,
                 ]);

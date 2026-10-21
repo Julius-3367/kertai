@@ -27,7 +27,7 @@ final class ChartOfAccounts
 
     public const GROUP_FUND = '3000';
 
-    /** @var array<string, array{name: string, kind: string, purpose: string}> */
+    /** @var array<int|string, array{name: string, kind: string, purpose: string}> */
     public const BASE = [
         self::BANK => ['name' => 'Equity Bank (paybill 247247)', 'kind' => 'asset', 'purpose' => 'bank'],
         self::MPESA => ['name' => 'SimulinkPay M-Pesa collections', 'kind' => 'asset', 'purpose' => 'mpesa'],

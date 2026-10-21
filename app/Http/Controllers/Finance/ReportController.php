@@ -61,6 +61,9 @@ class ReportController extends Controller
         if ($format === 'csv') {
             return response()->streamDownload(function () use ($lines) {
                 $out = fopen('php://output', 'w');
+                if ($out === false) {
+                    return;
+                }
                 fputcsv($out, ['Date', 'Entry', 'Description', 'Fund', 'In (KES)', 'Out (KES)', 'Savings balance (KES)']);
                 foreach ($lines as $l) {
                     fputcsv($out, [$l['date'], $l['entry_number'], $l['description'], $l['fund'], Money::toShillings($l['in']), Money::toShillings($l['out']), Money::toShillings($l['savings_balance'])]);
@@ -96,6 +99,9 @@ class ReportController extends Controller
 
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
             fputcsv($out, ['Member no.', 'Name', 'Phone', 'Arrears (KES)', 'Fines (KES)', 'Oldest due']);
             foreach ($rows as $r) {
                 fputcsv($out, [$r['member_number'], $r['name'], $r['phone'], Money::toShillings($r['arrears']), Money::toShillings($r['fines']), $r['oldest'] ? CarbonImmutable::parse($r['oldest'])->toDateString() : '']);

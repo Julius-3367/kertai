@@ -82,7 +82,7 @@ class PaymentController extends Controller
             throw new RuleViolation('Choose the member this contribution is from.');
         }
 
-        $member = isset($data['member_id']) ? Member::find($data['member_id']) : null;
+        $member = isset($data['member_id']) ? Member::find((int) $data['member_id']) : null;
 
         $payment = $record->handle(
             $this->group(),
@@ -125,7 +125,7 @@ class PaymentController extends Controller
             Gate::authorize(Permission::PaymentsRecord->value);
         }
 
-        $member = $forOther ? Member::findOrFail($data['member_id']) : $user->member;
+        $member = $forOther ? Member::findOrFail((int) $data['member_id']) : $user->member;
 
         $payment = $initiate->handle(
             $this->group(),
@@ -191,7 +191,7 @@ class PaymentController extends Controller
         ])->save();
 
         $allocate->handle($payment);
-        Audit::log('payment.matched', "Payment #{$payment->id} matched to ".($payment->member?->name ?? $data['purpose']), $payment);
+        Audit::log('payment.matched', "Payment #{$payment->id} matched to ".($payment->member->name ?? $data['purpose']), $payment);
         $this->toast('Payment matched and allocated.');
 
         return back();
@@ -235,7 +235,7 @@ class PaymentController extends Controller
     /**
      * Options for the "what is it for" pickers.
      *
-     * @return array<string, list<array{id: int, label: string}>>
+     * @return array<string, array<int, array{id: int, label: string}>>
      */
     private function targets(): array
     {

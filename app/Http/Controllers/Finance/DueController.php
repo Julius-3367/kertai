@@ -96,7 +96,7 @@ class DueController extends Controller
             'reason' => ['required', 'string', 'max:150'],
         ]);
 
-        $member = Member::findOrFail($data['member_id']);
+        $member = Member::findOrFail((int) $data['member_id']);
         $amount = $this->cents($data['amount']);
 
         $due = Due::create([

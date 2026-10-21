@@ -68,14 +68,14 @@ class WelfareController extends Controller
             'benefit_amount' => Money::rule(false, 0),
         ]);
 
-        $member = Member::findOrFail($data['member_id']);
-        $dependant = isset($data['dependant_id']) ? $member->dependants()->find($data['dependant_id']) : null;
+        $member = Member::findOrFail((int) $data['member_id']);
+        $dependant = isset($data['dependant_id']) ? $member->dependants()->find((int) $data['dependant_id']) : null;
 
         if (isset($data['dependant_id']) && $dependant === null) {
             throw new RuleViolation('That beneficiary is not registered under this member.');
         }
 
-        $relationship = $dependant?->relationship ?? 'self';
+        $relationship = $dependant->relationship ?? 'self';
         $benefit = ($data['benefit_amount'] ?? null) !== null && $data['benefit_amount'] !== ''
             ? $this->cents($data['benefit_amount'])
             : $this->group()->settings()->welfareBenefit($data['event'], $relationship);
@@ -83,7 +83,7 @@ class WelfareController extends Controller
         $case = WelfareCase::create([
             'member_id' => $member->id,
             'dependant_id' => $dependant?->id,
-            'beneficiary_name' => $dependant?->name ?? $member->name,
+            'beneficiary_name' => $dependant->name ?? $member->name,
             'relationship' => $relationship,
             'event' => $data['event'],
             'event_on' => $data['event_on'],

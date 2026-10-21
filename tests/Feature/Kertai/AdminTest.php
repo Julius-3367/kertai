@@ -6,9 +6,11 @@ use App\Domain\Documents\Models\Document;
 use App\Domain\Integrations\Models\Integration;
 use App\Domain\Ledger\ChartOfAccounts;
 use App\Domain\Ledger\Ledger;
+use App\Domain\Notifications\Email\EmailSender;
 use App\Domain\Payouts\Models\Payout;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 function rulesPayload(array $settings = [], string $resolution = '2026/05'): array
@@ -93,6 +95,21 @@ it('sends email through a saved SMTP-style provider', function () {
 
     expect(config('mail.mailers.kertai.transport'))->toBe('log');
 });
+
+it('builds the Mailgun, Postmark and SES mailers from saved keys', function (string $driver, array $values, string $transport) {
+    $this->group();
+    Integration::query()->create(['kind' => 'email', 'driver' => $driver, 'credentials' => $values, 'is_active' => true]);
+
+    $sender = app(EmailSender::class);
+    $mailer = (new ReflectionMethod($sender, 'configureMailer'))->invoke($sender, $driver, $values);
+
+    expect($mailer)->toBe('kertai')
+        ->and((string) Mail::mailer('kertai')->getSymfonyTransport())->toContain($transport);
+})->with([
+    'mailgun' => ['mailgun', ['domain' => 'mg.example.com', 'secret' => 'key-123'], 'mailgun'],
+    'postmark' => ['postmark', ['token' => 'pm-123'], 'postmark'],
+    'ses' => ['ses', ['region' => 'eu-west-1', 'username' => 'AKIA', 'password' => 'x'], 'email-smtp.eu-west-1.amazonaws.com'],
+]);
 
 it('shows the audit log to the auditor only', function () {
     $this->actingAs($this->official('chairperson'))->put('/rules', rulesPayload());

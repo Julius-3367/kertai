@@ -30,6 +30,7 @@ class Resolution extends Model
         return ['adopted_on' => 'immutable_date'];
     }
 
+    /** @return BelongsTo<Meeting, $this> */
     public function meeting(): BelongsTo
     {
         return $this->belongsTo(Meeting::class);

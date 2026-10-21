@@ -49,7 +49,7 @@ class Member extends Model
 
     protected $guarded = ['id', 'group_id'];
 
-    /** @var list<string>|null */
+    /** @var array<int, string>|null */
     private ?array $permissionCache = null;
 
     protected function casts(): array
@@ -66,36 +66,46 @@ class Member extends Model
         ];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return HasMany<Dependant, $this> */
     public function dependants(): HasMany
     {
         return $this->hasMany(Dependant::class);
     }
 
+    /** @return HasMany<PositionTerm, $this> */
     public function terms(): HasMany
     {
         return $this->hasMany(PositionTerm::class);
     }
 
+    /** @return HasMany<PositionTerm, $this> */
     public function currentTerms(): HasMany
     {
         return $this->terms()->current()->with('position');
     }
 
+    /** @return HasMany<Due, $this> */
     public function dues(): HasMany
     {
         return $this->hasMany(Due::class);
     }
 
+    /** @return HasMany<Payment, $this> */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->whereIn('status', ['active', 'exiting']);
@@ -106,7 +116,7 @@ class Member extends Model
         return in_array($this->status, ['active', 'exiting'], true);
     }
 
-    /** @return list<string> */
+    /** @return array<int, string> */
     public function permissions(): array
     {
         if ($this->permissionCache !== null) {
@@ -118,7 +128,7 @@ class Member extends Model
         }
 
         return $this->permissionCache = $this->currentTerms()->get()
-            ->flatMap(fn (PositionTerm $term) => $term->position->permissions ?? [])
+            ->flatMap(fn ($term) => $term->position->permissions ?? [])
             ->unique()
             ->values()
             ->all();
@@ -141,11 +151,11 @@ class Member extends Model
         return parent::refresh();
     }
 
-    /** @return list<string> */
+    /** @return array<int, string> */
     public function positionNames(): array
     {
         return $this->currentTerms()->get()
-            ->map(fn (PositionTerm $t) => $t->position->name.($t->is_acting ? ' (acting)' : ''))
+            ->map(fn ($t) => $t->position->name.($t->is_acting ? ' (acting)' : ''))
             ->all();
     }
 

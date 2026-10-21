@@ -71,7 +71,7 @@ final class MemberFinance
      * Ledger lines tagged with this member, oldest first, with a running
      * balance of their savings.
      *
-     * @return list<array<string, mixed>>
+     * @return array<int, array<string, mixed>>
      */
     public function statement(Member $member, ?CarbonImmutable $from = null, ?CarbonImmutable $to = null): array
     {

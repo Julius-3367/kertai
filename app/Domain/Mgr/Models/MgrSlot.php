@@ -29,16 +29,19 @@ class MgrSlot extends Model
         return ['scheduled_on' => 'immutable_date'];
     }
 
+    /** @return BelongsTo<MgrCycle, $this> */
     public function cycle(): BelongsTo
     {
         return $this->belongsTo(MgrCycle::class, 'mgr_cycle_id');
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
     }
 
+    /** @return BelongsTo<Payout, $this> */
     public function payout(): BelongsTo
     {
         return $this->belongsTo(Payout::class);

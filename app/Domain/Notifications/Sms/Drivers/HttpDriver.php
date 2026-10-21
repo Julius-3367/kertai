@@ -32,7 +32,7 @@ final class HttpDriver implements SmsDriver
 
         // JSON-escape the value and drop only the surrounding quotes, so a
         // message that ends in a quote mark stays valid JSON.
-        $replace = fn (string $value) => substr(json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 1, -1);
+        $replace = fn (string $value) => substr((string) json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 1, -1);
         $body = strtr($template, [
             '{to}' => $replace($to),
             '{message}' => $replace($message),

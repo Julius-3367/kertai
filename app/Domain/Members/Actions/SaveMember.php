@@ -38,7 +38,7 @@ final class SaveMember
                 ])->save();
             }
 
-            Audit::log($member->wasRecentlyCreated ? 'member.created' : 'member.updated', ($member->wasRecentlyCreated ? 'Added' : 'Updated')." member {$member->member_number} {$member->name}", $member, array_keys($member->getChanges()), $group->id);
+            Audit::log($member->wasRecentlyCreated ? 'member.created' : 'member.updated', ($member->wasRecentlyCreated ? 'Added' : 'Updated')." member {$member->member_number} {$member->name}", $member, ['changed' => array_keys($member->getChanges())], $group->id);
 
             return $member;
         });

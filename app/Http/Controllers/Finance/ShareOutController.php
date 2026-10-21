@@ -22,7 +22,7 @@ class ShareOutController extends Controller
             'plan' => $plan->preview($this->group(), $percent),
             'batches' => Payout::query()->where('type', 'share_out')->whereNotNull('batch')
                 ->selectRaw('batch, COUNT(*) as payouts, SUM(amount) as total, MIN(created_at) as created_at')
-                ->groupBy('batch')->orderByDesc('created_at')->get()
+                ->groupBy('batch')->orderByDesc('created_at')->toBase()->get()
                 ->map(fn ($b) => [
                     'batch' => $b->batch,
                     'payouts' => (int) $b->payouts,

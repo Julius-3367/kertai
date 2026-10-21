@@ -40,6 +40,7 @@ class Asset extends Model
         ];
     }
 
+    /** @return HasMany<Hire, $this> */
     public function hires(): HasMany
     {
         return $this->hasMany(Hire::class)->latest('starts_on');

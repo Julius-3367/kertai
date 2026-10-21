@@ -34,11 +34,13 @@ class Account extends Model
         return ['is_active' => 'boolean'];
     }
 
+    /** @return HasMany<JournalLine, $this> */
     public function lines(): HasMany
     {
         return $this->hasMany(JournalLine::class);
     }
 
+    /** @return MorphTo<Model, $this> */
     public function owner(): MorphTo
     {
         return $this->morphTo();

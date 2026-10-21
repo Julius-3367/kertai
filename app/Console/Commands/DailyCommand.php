@@ -27,7 +27,8 @@ class DailyCommand extends Command
 
     public function handle(GenerateMonthlyDues $dues, ApplyLateFines $fines, Notifier $notifier, CurrentGroup $current): int
     {
-        $today = $this->option('date') ? CarbonImmutable::parse($this->option('date')) : CarbonImmutable::today();
+        $date = $this->option('date');
+        $today = is_string($date) && $date !== '' ? CarbonImmutable::parse($date) : CarbonImmutable::today();
 
         foreach (Group::all() as $group) {
             $current->runAs($group, function () use ($group, $today, $dues, $fines, $notifier) {

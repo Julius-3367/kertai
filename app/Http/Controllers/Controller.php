@@ -33,7 +33,7 @@ abstract class Controller
     /**
      * Members for pickers: id, number and name, active first.
      *
-     * @return list<array{id: int, label: string, status: string}>
+     * @return array<int, array{id: int, label: string, status: string}>
      */
     protected function memberOptions(bool $activeOnly = true): array
     {

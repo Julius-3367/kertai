@@ -91,7 +91,7 @@ class FundraiserController extends Controller
             ],
             'payments' => $canManage ? $payments->map(fn (Payment $p) => [
                 'id' => $p->id,
-                'name' => $p->member?->name ?? $p->payer_name ?? 'Anonymous',
+                'name' => $p->member->name ?? $p->payer_name ?? 'Anonymous',
                 'phone' => $p->phone ? Phone::display($p->phone) : null,
                 'amount' => $p->amount,
                 'channel' => $p->channel,
@@ -165,7 +165,7 @@ class FundraiserController extends Controller
             'note' => ['nullable', 'string', 'max:200'],
         ]);
 
-        $member = isset($data['member_id']) ? Member::find($data['member_id']) : null;
+        $member = isset($data['member_id']) ? Member::find((int) $data['member_id']) : null;
 
         $fundraiser->pledges()->create([
             'member_id' => $member?->id,
@@ -200,14 +200,17 @@ class FundraiserController extends Controller
 
         return response()->streamDownload(function () use ($payments) {
             $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
             fputcsv($out, ['Date', 'Name', 'Phone', 'Member', 'Channel', 'Receipt', 'Amount (KES)', 'Name shown publicly']);
 
             foreach ($payments as $p) {
                 fputcsv($out, [
                     ($p->received_at ?? $p->created_at)->format('Y-m-d H:i'),
-                    $p->member?->name ?? $p->payer_name,
+                    $p->member->name ?? $p->payer_name,
                     $p->phone ? Phone::display($p->phone) : '',
-                    $p->member?->member_number ?? '',
+                    $p->member->member_number ?? '',
                     $p->channel,
                     $p->receipt_number,
                     Money::toShillings($p->amount),

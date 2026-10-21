@@ -46,26 +46,31 @@ class JournalEntry extends Model
         static::deleting(fn () => throw new LogicException('Journal entries are immutable. Post a reversal instead.'));
     }
 
+    /** @return HasMany<JournalLine, $this> */
     public function lines(): HasMany
     {
         return $this->hasMany(JournalLine::class);
     }
 
+    /** @return MorphTo<Model, $this> */
     public function source(): MorphTo
     {
         return $this->morphTo();
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<self, $this> */
     public function reversalOf(): BelongsTo
     {
         return $this->belongsTo(self::class, 'reversal_of_id');
     }
 
+    /** @return HasOne<self, $this> */
     public function reversedBy(): HasOne
     {
         return $this->hasOne(self::class, 'reversal_of_id');

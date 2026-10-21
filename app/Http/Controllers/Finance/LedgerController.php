@@ -120,8 +120,8 @@ class LedgerController extends Controller
             'date' => ['required', 'date', 'before_or_equal:today'],
         ]);
 
-        $from = Account::findOrFail($data['from_account_id']);
-        $to = Account::findOrFail($data['to_account_id']);
+        $from = Account::findOrFail((int) $data['from_account_id']);
+        $to = Account::findOrFail((int) $data['to_account_id']);
         $amount = $this->cents($data['amount']);
 
         if ($ledger->balance($from) < $amount) {
@@ -154,17 +154,17 @@ class LedgerController extends Controller
             'reference' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $fund = Account::findOrFail($data['fund_account_id']);
+        $fund = Account::findOrFail((int) $data['fund_account_id']);
 
         if ($fund->isPerMember() && empty($data['member_id'])) {
             throw new RuleViolation("Opening balances for {$fund->name} are entered per member.");
         }
 
         $amount = $this->cents($data['amount']);
-        $member = isset($data['member_id']) ? Member::find($data['member_id']) : null;
+        $member = isset($data['member_id']) ? Member::find((int) $data['member_id']) : null;
 
         $entry = $ledger->post('Opening balance'.($member ? " for {$member->name}" : '')." ({$fund->name})", [
-            ['account' => Account::findOrFail($data['asset_account_id']), 'debit' => $amount, 'member_id' => $member?->id, 'memo' => 'Opening balance'],
+            ['account' => Account::findOrFail((int) $data['asset_account_id']), 'debit' => $amount, 'member_id' => $member?->id, 'memo' => 'Opening balance'],
             ['account' => $fund, 'credit' => $amount, 'member_id' => $member?->id, 'memo' => 'Opening balance'],
         ], date: CarbonImmutable::parse($data['date']), reference: $data['reference'] ?? 'OPENING');
 

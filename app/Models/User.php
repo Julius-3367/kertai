@@ -57,17 +57,19 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
+    /** @return BelongsTo<Group, $this> */
     public function group(): BelongsTo
     {
         return $this->belongsTo(Group::class);
     }
 
+    /** @return HasOne<Member, $this> */
     public function member(): HasOne
     {
         return $this->hasOne(Member::class);
     }
 
-    /** @return list<string> */
+    /** @return array<int, string> */
     public function permissions(): array
     {
         return $this->member?->permissions() ?? [];

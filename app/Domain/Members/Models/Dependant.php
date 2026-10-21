@@ -27,6 +27,7 @@ class Dependant extends Model
         return ['date_of_birth' => 'immutable_date'];
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);

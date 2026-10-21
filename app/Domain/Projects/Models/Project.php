@@ -49,26 +49,31 @@ class Project extends Model
         ];
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function coordinator(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'coordinator_member_id');
     }
 
+    /** @return HasMany<ProjectParticipant, $this> */
     public function participants(): HasMany
     {
         return $this->hasMany(ProjectParticipant::class);
     }
 
+    /** @return HasMany<ProjectEntry, $this> */
     public function entries(): HasMany
     {
         return $this->hasMany(ProjectEntry::class)->latest('entry_on')->latest('id');
     }
 
+    /** @return HasMany<ProjectItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(ProjectItem::class);
     }
 
+    /** @return HasMany<Sale, $this> */
     public function sales(): HasMany
     {
         return $this->hasMany(Sale::class)->latest('sold_on')->latest('id');

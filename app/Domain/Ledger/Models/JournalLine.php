@@ -33,16 +33,19 @@ class JournalLine extends Model
         static::deleting(fn () => throw new LogicException('Journal lines are immutable.'));
     }
 
+    /** @return BelongsTo<JournalEntry, $this> */
     public function entry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);

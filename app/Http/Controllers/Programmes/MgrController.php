@@ -147,7 +147,7 @@ class MgrController extends Controller
 
         $mine = $cycle->slots()->where('member_id', $request->user()->member->id)->first()
             ?? throw new RuleViolation('You are not in this cycle.');
-        $theirs = $cycle->slots()->findOrFail($data['target_slot_id']);
+        $theirs = $cycle->slots()->findOrFail((int) $data['target_slot_id']);
 
         $mgr->requestSwap($mine, $theirs, $data['reason'] ?? null);
         $this->toast("Swap requested. {$theirs->member->name} must agree, then the chair approves.");

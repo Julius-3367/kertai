@@ -35,11 +35,13 @@ class MgrCycle extends Model
         ];
     }
 
+    /** @return HasMany<MgrSlot, $this> */
     public function slots(): HasMany
     {
         return $this->hasMany(MgrSlot::class)->orderBy('position');
     }
 
+    /** @return HasMany<MgrSwap, $this> */
     public function swaps(): HasMany
     {
         return $this->hasMany(MgrSwap::class)->latest();

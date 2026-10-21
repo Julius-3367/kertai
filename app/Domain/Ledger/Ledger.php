@@ -17,7 +17,7 @@ final class Ledger
      * ['account' => Account, 'debit' => cents] or ['account' => Account, 'credit' => cents],
      * optionally with 'member_id' and 'memo'. Zero lines are dropped.
      *
-     * @param  list<array{account: Account, debit?: int, credit?: int, member_id?: int|null, memo?: string|null}>  $lines
+     * @param  array<int, array{account: Account, debit?: int, credit?: int, member_id?: int|null, memo?: string|null}>  $lines
      */
     public function post(
         string $description,

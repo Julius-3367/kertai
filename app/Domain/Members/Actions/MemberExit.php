@@ -8,7 +8,6 @@ use App\Domain\Dues\Models\Due;
 use App\Domain\Groups\Models\Group;
 use App\Domain\Ledger\ChartOfAccounts;
 use App\Domain\Ledger\Ledger;
-use App\Domain\Members\MemberFinance;
 use App\Domain\Members\Models\Member;
 use App\Domain\Payouts\Actions\RequestPayout;
 use App\Domain\Payouts\Models\Payout;
@@ -28,7 +27,6 @@ final class MemberExit
         private readonly Ledger $ledger,
         private readonly ChartOfAccounts $accounts,
         private readonly DueAllocator $dues,
-        private readonly MemberFinance $finance,
         private readonly RequestPayout $payouts,
     ) {}
 

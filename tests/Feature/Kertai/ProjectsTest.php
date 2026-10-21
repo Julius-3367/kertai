@@ -6,6 +6,7 @@ use App\Domain\Payouts\Models\Payout;
 use App\Domain\Projects\Models\Project;
 use App\Domain\Projects\Models\ProjectItem;
 use App\Domain\Projects\Models\Sale;
+use App\Domain\Projects\ProjectBook;
 
 beforeEach(function () {
     $this->pc = $this->official('project-coordinator');
@@ -109,6 +110,17 @@ it('raises expenses as payouts and shares profit into savings by contribution', 
         ->and($this->project->profitAndLoss()['distributed'])->toBe(800000);
 
     $this->actingAs($this->pc)->get("/projects/{$this->project->id}")->assertOk()->assertInertia(fn ($p) => $p->where('pnl.undistributed', 0)->has('expenses', 1));
+});
+
+it('gives rounding leftovers to the largest holder, not the highest member number', function () {
+    $book = app(ProjectBook::class);
+    $this->project->participants()->create(['member_id' => $this->alice->id, 'contributed' => 200000, 'joined_on' => '2026-03-01']);
+    $this->project->participants()->create(['member_id' => $this->bob->id, 'contributed' => 100000, 'joined_on' => '2026-03-01']);
+
+    $shares = collect($book->shareOutPreview($this->project, 100)['shares'])->pluck('amount', 'member_id');
+
+    // 100 cents split 2:1 is 66 and 33; the spare cent goes to Alice.
+    expect($shares[$this->alice->id])->toBe(67)->and($shares[$this->bob->id])->toBe(33);
 });
 
 it('lets members with project access see projects but not change them', function () {

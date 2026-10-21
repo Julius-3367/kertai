@@ -25,11 +25,13 @@ class ProjectItem extends Model
         return ['unit_price' => 'integer', 'quantity' => 'integer'];
     }
 
+    /** @return BelongsTo<Project, $this> */
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
+    /** @return HasMany<StockMovement, $this> */
     public function movements(): HasMany
     {
         return $this->hasMany(StockMovement::class)->latest('id');

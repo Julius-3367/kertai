@@ -33,16 +33,19 @@ class Meeting extends Model
         return ['scheduled_at' => 'immutable_datetime'];
     }
 
+    /** @return HasMany<MeetingAttendance, $this> */
     public function attendances(): HasMany
     {
         return $this->hasMany(MeetingAttendance::class);
     }
 
+    /** @return HasMany<Resolution, $this> */
     public function resolutions(): HasMany
     {
         return $this->hasMany(Resolution::class)->orderBy('number');
     }
 
+    /** @return HasMany<Payment, $this> */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);

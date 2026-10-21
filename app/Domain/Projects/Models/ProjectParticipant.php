@@ -24,11 +24,13 @@ class ProjectParticipant extends Model
         return ['contributed' => 'integer', 'joined_on' => 'immutable_date'];
     }
 
+    /** @return BelongsTo<Project, $this> */
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);

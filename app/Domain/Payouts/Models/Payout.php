@@ -72,31 +72,37 @@ class Payout extends Model
         ];
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function payee(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'payee_member_id');
     }
 
+    /** @return MorphTo<Model, $this> */
     public function payable(): MorphTo
     {
         return $this->morphTo();
     }
 
+    /** @return HasMany<PayoutApproval, $this> */
     public function approvals(): HasMany
     {
         return $this->hasMany(PayoutApproval::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function requester(): BelongsTo
     {
         return $this->belongsTo(User::class, 'requested_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function payer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'paid_by');
@@ -106,12 +112,15 @@ class Payout extends Model
      * Pending payouts this official may still decide on: not their own
      * request, not paid to them, and not already decided by them. A rule-
      * raised payout has no requester (NULL), which != would silently drop.
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
      */
     public function scopeAwaitingDecisionBy(Builder $query, User $user): Builder
     {
         return $query->where('status', 'pending')
             ->where(fn ($q) => $q->whereNull('requested_by')->orWhere('requested_by', '!=', $user->id))
-            ->where(fn ($q) => $q->whereNull('payee_member_id')->orWhere('payee_member_id', '!=', $user->member?->id ?? 0))
+            ->where(fn ($q) => $q->whereNull('payee_member_id')->orWhere('payee_member_id', '!=', $user->member->id ?? 0))
             ->whereDoesntHave('approvals', fn ($a) => $a->where('user_id', $user->id));
     }
 

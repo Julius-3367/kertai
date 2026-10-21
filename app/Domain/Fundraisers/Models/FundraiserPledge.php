@@ -24,11 +24,13 @@ class FundraiserPledge extends Model
         return ['amount' => 'integer'];
     }
 
+    /** @return BelongsTo<Fundraiser, $this> */
     public function fundraiser(): BelongsTo
     {
         return $this->belongsTo(Fundraiser::class);
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);

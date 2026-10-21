@@ -50,7 +50,7 @@ final class MerryGoRound
         }
 
         $seed ??= Str::lower(Str::random(16));
-        $order = $this->draw($members->pluck('id')->all(), $seed);
+        $order = $this->draw(array_values(array_map('intval', $members->pluck('id')->all())), $seed);
         $group = Group::findOrFail($cycle->group_id);
 
         DB::transaction(function () use ($cycle, $order, $seed, $by, $group) {
@@ -86,7 +86,7 @@ final class MerryGoRound
         sort($memberIds);
         $randomizer = new Randomizer(new Mt19937(crc32($seed)));
 
-        return array_values($randomizer->shuffleArray($memberIds));
+        return $randomizer->shuffleArray($memberIds);
     }
 
     /**

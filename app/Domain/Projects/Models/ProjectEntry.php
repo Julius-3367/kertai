@@ -31,11 +31,13 @@ class ProjectEntry extends Model
         return ['amount' => 'integer', 'entry_on' => 'immutable_date'];
     }
 
+    /** @return BelongsTo<Project, $this> */
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);

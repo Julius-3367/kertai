@@ -59,7 +59,7 @@ final class RequestPayout
             'amount' => $amount,
             'account_id' => $from->id,
             'payee_member_id' => $payee?->id,
-            'payee_name' => $payeeName ?: ($payee?->name ?? throw new RuleViolation('Enter who is being paid.')),
+            'payee_name' => $payeeName ?: ($payee->name ?? throw new RuleViolation('Enter who is being paid.')),
             'payee_phone' => Phone::normalize($payeePhone) ?? ($payee ? Phone::normalize($payee->phone) : null),
             'description' => $description,
             'payable_type' => $payable?->getMorphClass(),
@@ -81,7 +81,7 @@ final class RequestPayout
                 'payee' => $payout->payee_name,
                 'description' => $description,
                 'link' => url("/payouts/{$payout->id}"),
-            ], $raisedByRules ? null : auth()->id());
+            ], $raisedByRules || auth()->id() === null ? null : (int) auth()->id());
         }
 
         return $payout;

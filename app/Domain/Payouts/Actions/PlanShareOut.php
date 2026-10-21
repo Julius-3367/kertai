@@ -31,7 +31,7 @@ final class PlanShareOut
     ) {}
 
     /**
-     * @return array{group_fund: int, distribute: int, rows: list<array<string, mixed>>}
+     * @return array{group_fund: int, distribute: int, rows: array<int, array<string, mixed>>}
      */
     public function preview(Group $group, int $groupFundPercent): array
     {
@@ -80,7 +80,7 @@ final class PlanShareOut
             $count = 0;
 
             foreach ($plan['rows'] as $row) {
-                $member = Member::findOrFail($row['member_id']);
+                $member = Member::findOrFail((int) $row['member_id']);
 
                 // Debts come out of savings first; what is left is paid out.
                 $this->dues->payFromSavings($member, $label);

@@ -44,16 +44,19 @@ class WelfareCase extends Model
         ];
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
     }
 
+    /** @return BelongsTo<Dependant, $this> */
     public function dependant(): BelongsTo
     {
         return $this->belongsTo(Dependant::class);
     }
 
+    /** @return BelongsTo<Payout, $this> */
     public function payout(): BelongsTo
     {
         return $this->belongsTo(Payout::class);

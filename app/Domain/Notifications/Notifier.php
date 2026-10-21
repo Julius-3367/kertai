@@ -21,6 +21,7 @@ final class Notifier
      * switched on. Reminder templates respect the member's opt-out.
      *
      * @param  array<string, string|int|null>  $data
+     * @param  list<string>|null  $channels
      * @return list<OutboundMessage>
      */
     public function toMember(Member $member, string $key, array $data = [], ?array $channels = null): array

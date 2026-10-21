@@ -52,24 +52,34 @@ class Due extends Model
         ];
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
     }
 
+    /** @return MorphTo<Model, $this> */
     public function source(): MorphTo
     {
         return $this->morphTo();
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeOpen(Builder $query): Builder
     {
         return $query->where('status', 'open');
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeOverdue(Builder $query, ?CarbonImmutable $on = null): Builder
     {
-        return $query->open()->whereDate('due_on', '<', ($on ?? CarbonImmutable::today())->toDateString());
+        return $query->where('status', 'open')->whereDate('due_on', '<', ($on ?? CarbonImmutable::today())->toDateString());
     }
 
     public function outstanding(): int

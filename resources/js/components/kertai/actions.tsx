@@ -87,6 +87,7 @@ export function FormDialog<TForm extends FormDataType<TForm>>({
                     'max-h-[90vh] overflow-y-auto',
                     wide && 'sm:max-w-2xl',
                 )}
+                {...(description ? {} : { 'aria-describedby': undefined })}
             >
                 <form onSubmit={submit} className="grid gap-4">
                     <DialogHeader>

@@ -38,6 +38,7 @@ class ComplianceItem extends Model
         ];
     }
 
+    /** @return BelongsTo<Position, $this> */
     public function position(): BelongsTo
     {
         return $this->belongsTo(Position::class);

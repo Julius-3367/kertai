@@ -65,7 +65,9 @@ class InstallCommand extends Command
             'locale' => 'en',
         ]);
 
-        foreach (array_unique([$this->option('position'), 'system-admin']) as $slug) {
+        $first = $this->option('position');
+
+        foreach (array_unique([is_string($first) ? $first : 'chairperson', 'system-admin']) as $slug) {
             $position = Position::query()->where('slug', $slug)->first();
 
             if ($position) {

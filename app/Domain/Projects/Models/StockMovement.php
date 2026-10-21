@@ -20,11 +20,13 @@ class StockMovement extends Model
 {
     protected $guarded = ['id'];
 
+    /** @return BelongsTo<ProjectItem, $this> */
     public function item(): BelongsTo
     {
         return $this->belongsTo(ProjectItem::class, 'project_item_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function recorder(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');

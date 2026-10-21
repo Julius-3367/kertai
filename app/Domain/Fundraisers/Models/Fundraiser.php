@@ -49,16 +49,19 @@ class Fundraiser extends Model
         return 'id';
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
+    /** @return MorphMany<Payment, $this> */
     public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'payable');
     }
 
+    /** @return HasMany<FundraiserPledge, $this> */
     public function pledges(): HasMany
     {
         return $this->hasMany(FundraiserPledge::class)->latest();

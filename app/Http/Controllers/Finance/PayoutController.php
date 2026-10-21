@@ -13,6 +13,7 @@ use App\Domain\Payouts\Actions\RequestPayout;
 use App\Domain\Payouts\Models\Payout;
 use App\Domain\Payouts\Models\PayoutApproval;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Support\Money;
 use App\Support\Phone;
 use App\Support\RuleViolation;
@@ -68,9 +69,9 @@ class PayoutController extends Controller
             $this->group(),
             $data['type'],
             $this->cents($data['amount']),
-            Account::findOrFail($data['account_id']),
+            Account::findOrFail((int) $data['account_id']),
             $data['description'],
-            isset($data['payee_member_id']) ? Member::find($data['payee_member_id']) : null,
+            isset($data['payee_member_id']) ? Member::find((int) $data['payee_member_id']) : null,
             $data['payee_name'] ?? null,
             $data['payee_phone'] ?? null,
         );
@@ -182,7 +183,7 @@ class PayoutController extends Controller
         return back();
     }
 
-    private function canDecide(Payout $payout, $user): bool
+    private function canDecide(Payout $payout, User $user): bool
     {
         return $payout->status === 'pending'
             && $user->hasPermission(Permission::PayoutsApprove->value)
@@ -203,7 +204,7 @@ class PayoutController extends Controller
             'type_label' => $p->typeLabel(),
             'status' => $p->status,
             'amount' => $p->amount,
-            'fund' => $p->account?->name,
+            'fund' => $p->account->name,
             'payee_name' => $p->payee_name,
             'payee_member_id' => $p->payee_member_id,
             'payee_phone' => $p->payee_phone ? Phone::display($p->payee_phone) : null,

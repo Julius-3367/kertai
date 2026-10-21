@@ -21,7 +21,7 @@ final class EmailSender
         $resolved = $this->settings->for($group?->id, 'email');
         $mailer = $this->configureMailer($resolved['driver'], $resolved['credentials']);
         $from = $resolved['credentials']['from_address'] ?? config('mail.from.address');
-        $fromName = $resolved['credentials']['from_name'] ?? $group?->name ?? config('mail.from.name');
+        $fromName = $resolved['credentials']['from_name'] ?? $group->name ?? config('mail.from.name');
 
         Mail::mailer($mailer)->html(
             view('mail.message', ['body' => $body, 'group' => $group, 'subject' => $subject])->render(),

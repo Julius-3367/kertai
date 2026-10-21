@@ -23,7 +23,7 @@ class AuditController extends Controller
             ->through(fn (AuditLog $l) => [
                 'id' => $l->id,
                 'at' => $l->created_at->toIso8601String(),
-                'user' => $l->user?->name ?? 'System',
+                'user' => $l->user->name ?? 'System',
                 'action' => $l->action,
                 'description' => $l->description,
                 'properties' => $l->properties,

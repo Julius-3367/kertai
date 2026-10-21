@@ -205,7 +205,7 @@ class DemoSeeder extends Seeder
 
         $record = app(RecordPayment::class);
         foreach ([[$members[0], 500000], [$members[2], 300000], [null, 200000], [$members[9], 150000]] as $k => [$member, $amount]) {
-            $payment = $record->handle($group, 'cash', $amount, 'fundraiser', $member, $fundraiser, null, payerName: $member?->name ?? 'Well-wisher from Kericho', phone: $member ? null : '0722000001');
+            $payment = $record->handle($group, 'cash', $amount, 'fundraiser', $member, $fundraiser, null, payerName: $member->name ?? 'Well-wisher from Kericho', phone: $member ? null : '0722000001');
             $payment->forceFill(['show_name' => $k !== 2])->save();
         }
 

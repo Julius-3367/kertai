@@ -20,6 +20,9 @@ final class RecordPayment
 {
     public function __construct(private readonly AllocatePayment $allocate) {}
 
+    /**
+     * @param  array<string, mixed>  $meta
+     */
     public function handle(
         Group $group,
         string $channel,

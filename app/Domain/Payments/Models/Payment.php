@@ -62,34 +62,46 @@ class Payment extends Model
         ];
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
     }
 
+    /** @return MorphTo<Model, $this> */
     public function payable(): MorphTo
     {
         return $this->morphTo();
     }
 
+    /** @return BelongsTo<User, $this> */
     public function recorder(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
     }
 
+    /** @return BelongsTo<JournalEntry, $this> */
     public function journalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class);
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeSucceeded(Builder $query): Builder
     {
         return $query->where('status', 'succeeded');
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeUnallocated(Builder $query): Builder
     {
-        return $query->succeeded()->whereNull('allocated_at');
+        return $query->where('status', 'succeeded')->whereNull('allocated_at');
     }
 
     public function isFinal(): bool

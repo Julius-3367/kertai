@@ -33,11 +33,13 @@ class Position extends Model
         ];
     }
 
+    /** @return HasMany<PositionTerm, $this> */
     public function terms(): HasMany
     {
         return $this->hasMany(PositionTerm::class);
     }
 
+    /** @return HasMany<PositionTerm, $this> */
     public function currentTerms(): HasMany
     {
         return $this->terms()->current();

@@ -36,7 +36,7 @@ class MeetingController extends Controller
                     'scheduled_at' => $m->scheduled_at->toIso8601String(),
                     'venue' => $m->venue,
                     'status' => $m->status,
-                    'present' => $m->present_count,
+                    'present' => (int) $m->getAttribute('present_count'),
                 ]),
             'resolutions' => Resolution::query()->latest('adopted_on')->limit(50)->get()->map(fn (Resolution $r) => [
                 'id' => $r->id,
@@ -92,7 +92,7 @@ class MeetingController extends Controller
             'collections' => $request->user()->hasPermission(Permission::FinanceView->value)
                 ? Payment::query()->where('meeting_id', $meeting->id)->with('member:id,name')->get()->map(fn (Payment $p) => [
                     'id' => $p->id,
-                    'member' => $p->member?->name ?? $p->payer_name,
+                    'member' => $p->member->name ?? $p->payer_name,
                     'amount' => $p->amount,
                     'purpose' => $p->purpose,
                 ])
@@ -212,7 +212,7 @@ class MeetingController extends Controller
         DB::transaction(function () use ($data, $meeting, $record, $date, &$total) {
             foreach ($data['rows'] as $row) {
                 $amount = $this->cents($row['amount']);
-                $record->handle($this->group(), 'cash', $amount, 'contribution', Member::findOrFail($row['member_id']), null, null, $date, meetingId: $meeting->id);
+                $record->handle($this->group(), 'cash', $amount, 'contribution', Member::findOrFail((int) $row['member_id']), null, null, $date, meetingId: $meeting->id);
                 $total += $amount;
             }
         });

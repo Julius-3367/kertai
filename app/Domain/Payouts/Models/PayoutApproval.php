@@ -18,11 +18,13 @@ class PayoutApproval extends Model
 {
     protected $guarded = ['id'];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Payout, $this> */
     public function payout(): BelongsTo
     {
         return $this->belongsTo(Payout::class);

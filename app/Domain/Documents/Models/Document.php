@@ -34,6 +34,7 @@ class Document extends Model
 
     protected $guarded = ['id'];
 
+    /** @return BelongsTo<User, $this> */
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');

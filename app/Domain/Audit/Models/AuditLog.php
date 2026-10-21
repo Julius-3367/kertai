@@ -38,6 +38,7 @@ class AuditLog extends Model
         static::deleting(fn () => throw new LogicException('Audit entries cannot be deleted.'));
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

@@ -4,9 +4,9 @@ namespace App\Domain\Notifications\Models;
 
 use App\Domain\Groups\Concerns\BelongsToGroup;
 use App\Domain\Members\Models\Member;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -22,7 +22,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $provider_message_id
  * @property int $attempts
  * @property string|null $error
- * @property Carbon|null $sent_at
+ * @property CarbonImmutable|null $sent_at
  * @property int|null $created_by
  */
 class OutboundMessage extends Model
@@ -36,6 +36,7 @@ class OutboundMessage extends Model
         return ['sent_at' => 'datetime'];
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);

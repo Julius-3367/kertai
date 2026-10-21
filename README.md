@@ -19,22 +19,22 @@ Members sign in with their phone number. Every shilling is posted to a double-en
 
 ## What it does
 
-| Area | What members and officials get |
-|---|---|
-| Members | Register with nominee and welfare beneficiaries (spouse, children, parents). Phone or email login issued by the secretary with a one-time password sent by SMS. Exit with one month's notice; savings refunded less debts. Deaths open a welfare case and pay savings to the nominee. |
-| Positions | Chairperson, secretary, treasurer, coordinator, project coordinator, auditor and system administrator out of the box. Vice and other positions are created by copying one and adjusting its permissions. Terms have dates; acting appointments lapse on their own. |
-| Contributions | Monthly dues raised automatically on the 1st. Each contribution fills the merry-go-round pot first, then welfare, then savings. Overpayments are held and used next month. Late fines are charged once after the grace period. Fines can be waived by the chair with a reason. |
-| Payments | M-Pesa prompts through SimulinkPay (members pay from the dashboard), paybill 247247 statement import (Equity or M-Pesa CSV) with automatic matching, cash at meetings, bank deposits. Unmatched lines wait for the treasurer. Wrong postings are reversed, never edited. |
-| Payouts | Every shilling out needs two approvals from different officials. The requester and the payee can never approve. Bulk approval for share-out batches. The treasurer marks it paid with the M-Pesa or bank reference, which moves the ledger. |
-| Merry-go-round | Ballot with a recorded seed anyone can re-run. Monthly turns. Members in arrears move to the back. Swaps need the other member's consent and the chair's approval. |
-| Welfare | Cases for members and their families, default benefits per event, optional levy on all other members, payout from the welfare fund. |
-| Fundraisers | Public page at `/f/<name>` with target, progress, an M-Pesa prompt and a list of supporters who agreed to be named. Pledges, CSV export, its own fund. |
-| Projects | Each project has its own fund, participants, contributions, income, expenses (as payouts), stock and sales. Profit is shared into members' savings by contribution or equally. |
-| Assets and hire | Tents, chairs and equipment. Hire rates can be left blank until agreed. Bookings cannot overlap beyond what the group owns. Hire income goes to the assets fund. |
-| Meetings | Notices by SMS and email, attendance, minutes, numbered resolutions, cash collection during the meeting. |
-| Messages | Every SMS and email logged with delivery status and retry. Editable templates in English and Kiswahili. Members can switch off reminders but not receipts. Members text `BAL` to get their balances. |
-| Reports | Fund movements, trial balance, contribution grid, arrears (CSV), member statements (screen, PDF, CSV), annual AGM report. |
-| Administration | Group rules (each change tied to a resolution number), provider keys stored encrypted, audit log, data export, document vault and compliance calendar, December share-out. |
+| Area            | What members and officials get                                                                                                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Members         | Register with nominee and welfare beneficiaries (spouse, children, parents). Phone or email login issued by the secretary with a one-time password sent by SMS. Exit with one month's notice; savings refunded less debts. Deaths open a welfare case and pay savings to the nominee. |
+| Positions       | Chairperson, secretary, treasurer, coordinator, project coordinator, auditor and system administrator out of the box. Vice and other positions are created by copying one and adjusting its permissions. Terms have dates; acting appointments lapse on their own.                    |
+| Contributions   | Monthly dues raised automatically on the 1st. Each contribution fills the merry-go-round pot first, then welfare, then savings. Overpayments are held and used next month. Late fines are charged once after the grace period. Fines can be waived by the chair with a reason.        |
+| Payments        | M-Pesa prompts through SimulinkPay (members pay from the dashboard), paybill 247247 statement import (Equity or M-Pesa CSV) with automatic matching, cash at meetings, bank deposits. Unmatched lines wait for the treasurer. Wrong postings are reversed, never edited.              |
+| Payouts         | Every shilling out needs two approvals from different officials. The requester and the payee can never approve. Bulk approval for share-out batches. The treasurer marks it paid with the M-Pesa or bank reference, which moves the ledger.                                           |
+| Merry-go-round  | Ballot with a recorded seed anyone can re-run. Monthly turns. Members in arrears move to the back. Swaps need the other member's consent and the chair's approval.                                                                                                                    |
+| Welfare         | Cases for members and their families, default benefits per event, optional levy on all other members, payout from the welfare fund.                                                                                                                                                   |
+| Fundraisers     | Public page at `/f/<name>` with target, progress, an M-Pesa prompt and a list of supporters who agreed to be named. Pledges, CSV export, its own fund.                                                                                                                                |
+| Projects        | Each project has its own fund, participants, contributions, income, expenses (as payouts), stock and sales. Profit is shared into members' savings by contribution or equally.                                                                                                        |
+| Assets and hire | Tents, chairs and equipment. Hire rates can be left blank until agreed. Bookings cannot overlap beyond what the group owns. Hire income goes to the assets fund.                                                                                                                      |
+| Meetings        | Notices by SMS and email, attendance, minutes, numbered resolutions, cash collection during the meeting.                                                                                                                                                                              |
+| Messages        | Every SMS and email logged with delivery status and retry. Editable templates in English and Kiswahili. Members can switch off reminders but not receipts. Members text `BAL` to get their balances.                                                                                  |
+| Reports         | Fund movements, trial balance, contribution grid, arrears (CSV), member statements (screen, PDF, CSV), annual AGM report.                                                                                                                                                             |
+| Administration  | Group rules (each change tied to a resolution number), provider keys stored encrypted, audit log, data export, document vault and compliance calendar, December share-out.                                                                                                            |
 
 It installs on a phone as an app (PWA) and works on slow connections.
 
@@ -42,26 +42,26 @@ It installs on a phone as an app (PWA) and works on slow connections.
 
 Members always see their own money, pay, request merry-go-round swaps and read meetings and documents. Positions add the rest:
 
-| Permission | Chair | Secretary | Treasurer | Coordinator | Project coord. | Auditor | System admin |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| View register | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Add / edit members, issue logins |  | ✓ |  |  |  |  | ✓ |
-| View finances and reports | ✓ | ✓ | ✓ |  |  | ✓ |  |
-| Record payments, import statements |  |  | ✓ |  |  |  |  |
-| Raise dues and fines |  |  | ✓ |  |  |  |  |
-| Waive fines | ✓ |  |  |  |  |  |  |
-| Request payouts |  |  | ✓ |  | ✓ |  |  |
-| Approve payouts | ✓ | ✓ | ✓ |  |  |  |  |
-| Mark payouts paid, ledger transfers |  |  | ✓ |  |  |  |  |
-| Merry-go-round (run / approve swaps) | swaps |  | run |  |  |  |  |
-| Welfare | ✓ | ✓ | ✓ |  |  |  |  |
-| Fundraisers | ✓ |  | ✓ | ✓ |  |  |  |
-| Projects (view / manage) | view | view | view | view | manage | view |  |
-| Assets and hire |  |  | ✓ |  | ✓ |  |  |
-| Meetings, messages, documents | ✓ | ✓ |  | ✓ |  |  | messages |
-| Group rules, positions | ✓ |  |  |  |  |  | positions |
-| Provider keys, backups |  |  |  |  |  |  | ✓ |
-| Audit log | ✓ |  |  |  |  | ✓ | ✓ |
+| Permission                           | Chair | Secretary | Treasurer | Coordinator | Project coord. | Auditor | System admin |
+| ------------------------------------ | :---: | :-------: | :-------: | :---------: | :------------: | :-----: | :----------: |
+| View register                        |   ✓   |     ✓     |     ✓     |      ✓      |       ✓        |    ✓    |      ✓       |
+| Add / edit members, issue logins     |       |     ✓     |           |             |                |         |      ✓       |
+| View finances and reports            |   ✓   |     ✓     |     ✓     |             |                |    ✓    |              |
+| Record payments, import statements   |       |           |     ✓     |             |                |         |              |
+| Raise dues and fines                 |       |           |     ✓     |             |                |         |              |
+| Waive fines                          |   ✓   |           |           |             |                |         |              |
+| Request payouts                      |       |           |     ✓     |             |       ✓        |         |              |
+| Approve payouts                      |   ✓   |     ✓     |     ✓     |             |                |         |              |
+| Mark payouts paid, ledger transfers  |       |           |     ✓     |             |                |         |              |
+| Merry-go-round (run / approve swaps) | swaps |           |    run    |             |                |         |              |
+| Welfare                              |   ✓   |     ✓     |     ✓     |             |                |         |              |
+| Fundraisers                          |   ✓   |           |     ✓     |      ✓      |                |         |              |
+| Projects (view / manage)             | view  |   view    |   view    |    view     |     manage     |  view   |              |
+| Assets and hire                      |       |           |     ✓     |             |       ✓        |         |              |
+| Meetings, messages, documents        |   ✓   |     ✓     |           |      ✓      |                |         |   messages   |
+| Group rules, positions               |   ✓   |           |           |             |                |         |  positions   |
+| Provider keys, backups               |       |           |           |             |                |         |      ✓       |
+| Audit log                            |   ✓   |           |           |             |                |    ✓    |      ✓       |
 
 The system administrator can never be given a money permission. Any position can be changed under **Positions**.
 
@@ -78,12 +78,12 @@ The two totals are always equal; the ledger page shows a "Books balance" badge. 
 
 A KES 1,000 contribution paid by M-Pesa posts:
 
-| Account | Debit | Credit |
-|---|--:|--:|
-| SimulinkPay M-Pesa collections | 1,000 | |
-| Merry-go-round pot | | 500 |
-| Welfare fund | | 200 |
-| Member savings (that member) | | 300 |
+| Account                        | Debit | Credit |
+| ------------------------------ | ----: | -----: |
+| SimulinkPay M-Pesa collections | 1,000 |        |
+| Merry-go-round pot             |       |    500 |
+| Welfare fund                   |       |    200 |
+| Member savings (that member)   |       |    300 |
 
 The split, due day, fine, benefits and approval count are set under **Group rules**.
 
@@ -91,7 +91,7 @@ Payouts are recorded, not sent: SimulinkPay collects money but has no API for se
 
 ## Running it locally
 
-Needs PHP 8.3+ (with `pdo_sqlite`, `zip`, `intl`, `gd`), Composer and Node 22.
+Needs PHP 8.4+ (with `pdo_sqlite`, `zip`, `intl`, `gd`), Composer and Node 22.
 
 ```bash
 git clone https://github.com/Julius-3367/kertai.git
@@ -113,7 +113,7 @@ To develop against PostgreSQL and Redis as in production: `docker compose up -d`
 
 ## Going live
 
-On the server (Ubuntu with Nginx, PHP-FPM 8.3+, PostgreSQL, Redis, Supervisor):
+On the server (Ubuntu with Nginx, PHP-FPM 8.4+, PostgreSQL, Redis, Supervisor):
 
 ```bash
 git clone https://github.com/Julius-3367/kertai.git /var/www/kertai

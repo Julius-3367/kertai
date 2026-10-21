@@ -102,6 +102,7 @@ class GroupSettingsController extends Controller
             return back()->withErrors(['settings.mgr_share' => 'The merry-go-round and welfare shares cannot add up to more than the contribution.']);
         }
 
+        /** @var array<string, mixed> $new */
         $before = $group->settings()->all();
         $new['resolution_reference'] = $data['resolution_reference'];
         $new['loans_enabled'] = false;

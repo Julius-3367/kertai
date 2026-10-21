@@ -96,7 +96,7 @@ final class ProjectBook
      * How profit splits between participants, by contribution or equally,
      * whichever the project uses.
      *
-     * @return array{available: int, shares: list<array{member_id: int, name: string, contributed: int, amount: int}>}
+     * @return array{available: int, shares: array<int, array{member_id: int, name: string, contributed: int, amount: int}>}
      */
     public function shareOutPreview(Project $project, int $amount): array
     {
@@ -125,12 +125,19 @@ final class ProjectBook
         }
 
         // Rounding leftovers (a few cents) go to the largest holder.
-        if ($allocated < $amount) {
-            usort($shares, fn ($a, $b) => $b['amount'] <=> $a['amount']);
-            $shares[0]['amount'] += $amount - $allocated;
+        $largest = 0;
+        foreach ($shares as $i => $share) {
+            if ($share['amount'] > $shares[$largest]['amount']) {
+                $largest = $i;
+            }
         }
+        $shares[$largest]['amount'] += $amount - $allocated;
 
-        return ['available' => $available, 'shares' => array_values(array_filter($shares, fn ($s) => $s['amount'] > 0))];
+        /** @var array<int, array{member_id: int, name: string, contributed: int, amount: int}> $shares */
+        return [
+            'available' => $available,
+            'shares' => array_values(array_filter($shares, fn (array $s) => $s['amount'] > 0)),
+        ];
     }
 
     /**

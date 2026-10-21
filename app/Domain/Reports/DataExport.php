@@ -84,11 +84,15 @@ final class DataExport
     }
 
     /**
-     * @param  list<object>  $rows
+     * @param  array<int, object>  $rows
      */
     private function csv(array $rows): string
     {
         $out = fopen('php://temp', 'r+');
+
+        if ($out === false) {
+            throw new RuntimeException('Could not open a temporary stream.');
+        }
 
         if ($rows !== []) {
             fputcsv($out, array_keys((array) $rows[0]), escape: '\\');

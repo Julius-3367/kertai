@@ -27,7 +27,7 @@ final class Reports
     /**
      * Opening, money in, money out and closing for every account in a period.
      *
-     * @return list<array<string, mixed>>
+     * @return array<int, array<string, mixed>>
      */
     public function fundMovements(CarbonImmutable $from, CarbonImmutable $to): array
     {
@@ -35,6 +35,7 @@ final class Reports
             $period = JournalLine::query()
                 ->where('account_id', $account->id)
                 ->whereHas('entry', fn ($q) => $q->whereDate('entry_date', '>=', $from->toDateString())->whereDate('entry_date', '<=', $to->toDateString()))
+                ->toBase()
                 ->selectRaw('COALESCE(SUM(debit),0) as d, COALESCE(SUM(credit),0) as c')
                 ->first();
 
@@ -54,7 +55,7 @@ final class Reports
     }
 
     /**
-     * @return array{rows: list<array<string, mixed>>, debits: int, credits: int}
+     * @return array{rows: array<int, array<string, mixed>>, debits: int, credits: int}
      */
     public function trialBalance(CarbonImmutable $on): array
     {
@@ -79,7 +80,7 @@ final class Reports
     /**
      * Contribution grid: one row per member, one column per month.
      *
-     * @return array{months: list<string>, rows: list<array<string, mixed>>}
+     * @return array{months: array<int, string>, rows: array<int, array<string, mixed>>}
      */
     public function contributionGrid(int $year): array
     {
@@ -103,7 +104,7 @@ final class Reports
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return array<int, array<string, mixed>>
      */
     public function arrears(): array
     {

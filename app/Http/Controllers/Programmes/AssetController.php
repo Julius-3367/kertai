@@ -104,8 +104,8 @@ class AssetController extends Controller
             'notes' => ['nullable', 'string', 'max:200'],
         ]);
 
-        $asset = Asset::findOrFail($data['asset_id']);
-        $member = isset($data['member_id']) ? Member::find($data['member_id']) : null;
+        $asset = Asset::findOrFail((int) $data['asset_id']);
+        $member = isset($data['member_id']) ? Member::find((int) $data['member_id']) : null;
         $from = CarbonImmutable::parse($data['starts_on']);
         $to = CarbonImmutable::parse($data['ends_on']);
         $rate = isset($data['rate']) && $data['rate'] !== '' ? $this->cents($data['rate']) : $asset->hire_rate;

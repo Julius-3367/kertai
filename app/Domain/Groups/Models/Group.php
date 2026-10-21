@@ -30,6 +30,7 @@ class Group extends Model
         return ['settings' => 'array'];
     }
 
+    /** @return HasMany<Member, $this> */
     public function members(): HasMany
     {
         return $this->hasMany(Member::class);

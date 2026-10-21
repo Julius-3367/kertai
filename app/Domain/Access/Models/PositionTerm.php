@@ -37,16 +37,22 @@ class PositionTerm extends Model
         ];
     }
 
+    /** @return BelongsTo<Position, $this> */
     public function position(): BelongsTo
     {
         return $this->belongsTo(Position::class);
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeCurrent(Builder $query, ?CarbonImmutable $on = null): Builder
     {
         $date = ($on ?? CarbonImmutable::today())->toDateString();

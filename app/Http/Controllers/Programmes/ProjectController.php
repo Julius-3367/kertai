@@ -215,7 +215,7 @@ class ProjectController extends Controller
             'received_on' => ['required', 'date', 'before_or_equal:today'],
         ]);
 
-        $member = isset($data['member_id']) ? Member::find($data['member_id']) : null;
+        $member = isset($data['member_id']) ? Member::find((int) $data['member_id']) : null;
         $amount = $this->cents($data['amount']);
 
         if ($data['channel'] === 'mpesa') {
@@ -360,9 +360,13 @@ class ProjectController extends Controller
             'payment' => ['required', Rule::in(['none', 'cash', 'mpesa'])],
         ]);
 
-        $sale = $book->sell(ProjectItem::findOrFail($data['project_item_id']), [
-            ...$data,
+        $sale = $book->sell(ProjectItem::findOrFail((int) $data['project_item_id']), [
+            'buyer_name' => (string) $data['buyer_name'],
+            'buyer_phone' => $data['buyer_phone'] ?? null,
+            'member_id' => isset($data['member_id']) ? (int) $data['member_id'] : null,
+            'quantity' => (int) $data['quantity'],
             'unit_price' => $this->cents($data['unit_price']),
+            'sold_on' => (string) $data['sold_on'],
         ]);
 
         $message = "Sale recorded: {$sale->quantity} {$sale->item->unit} for ".Money::format($sale->total).'.';

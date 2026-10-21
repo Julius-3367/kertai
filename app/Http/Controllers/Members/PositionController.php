@@ -74,7 +74,7 @@ class PositionController extends Controller
             'max_holders' => ['nullable', 'integer', 'min:1', 'max:50'],
         ]);
 
-        $source = Position::findOrFail($data['copy_from']);
+        $source = Position::findOrFail((int) $data['copy_from']);
         $slug = Str::slug($data['name']);
 
         if (Position::query()->where('slug', $slug)->exists()) {
@@ -162,7 +162,7 @@ class PositionController extends Controller
             throw new RuleViolation('An acting appointment needs an end date.');
         }
 
-        $member = Member::findOrFail($data['member_id']);
+        $member = Member::findOrFail((int) $data['member_id']);
 
         if (! $member->isActive()) {
             throw new RuleViolation("{$member->name} is not an active member.");
@@ -205,7 +205,8 @@ class PositionController extends Controller
 
         if ($term->member_id === $request->user()->member?->id && $managesPositions($term)) {
             $others = PositionTerm::query()->current()->with('position')->where('member_id', '!=', $term->member_id)->get()
-                ->contains($managesPositions);
+                ->filter($managesPositions)
+                ->isNotEmpty();
 
             if (! $others) {
                 throw new RuleViolation('You are the only person who can manage positions. Appoint someone else first.');

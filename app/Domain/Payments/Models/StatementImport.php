@@ -23,6 +23,7 @@ class StatementImport extends Model
 
     protected $guarded = ['id'];
 
+    /** @return BelongsTo<User, $this> */
     public function importer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'imported_by');

@@ -39,16 +39,19 @@ class Sale extends Model
         ];
     }
 
+    /** @return BelongsTo<Project, $this> */
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
+    /** @return BelongsTo<ProjectItem, $this> */
     public function item(): BelongsTo
     {
         return $this->belongsTo(ProjectItem::class, 'project_item_id');
     }
 
+    /** @return BelongsTo<Member, $this> */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);

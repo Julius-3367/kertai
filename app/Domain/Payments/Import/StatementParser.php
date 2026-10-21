@@ -27,7 +27,7 @@ final class StatementParser
     ];
 
     /**
-     * @return list<array{date: CarbonImmutable, amount: int, reference: string, narrative: string, phone: string|null, phones: list<string>, name: string|null, account: string|null}>
+     * @return array<int, array{date: CarbonImmutable, amount: int, reference: string, narrative: string, phone: string|null, phones: array<int, string>, name: string|null, account: string|null}>
      */
     public function parse(string $path): array
     {
@@ -42,7 +42,7 @@ final class StatementParser
 
         try {
             while (($row = fgetcsv($handle, escape: '\\')) !== false) {
-                if ($row === [null] || $row === []) {
+                if ($row === [null]) {
                     continue;
                 }
 
@@ -70,7 +70,7 @@ final class StatementParser
     }
 
     /**
-     * @param  list<string|null>  $header
+     * @param  array<int, string|null>  $header
      * @return array<string, int>|null
      */
     private function detectColumns(array $header): ?array
@@ -94,9 +94,9 @@ final class StatementParser
     }
 
     /**
-     * @param  list<string|null>  $row
+     * @param  array<int, string|null>  $row
      * @param  array<string, int>  $columns
-     * @return array{date: CarbonImmutable, amount: int, reference: string, narrative: string, phone: string|null, name: string|null, account: string|null}|null
+     * @return array{date: CarbonImmutable, amount: int, reference: string, narrative: string, phone: string|null, phones: array<int, string>, name: string|null, account: string|null}|null
      */
     private function parseRow(array $row, array $columns): ?array
     {

@@ -29,16 +29,19 @@ class MgrSwap extends Model
         ];
     }
 
+    /** @return BelongsTo<MgrCycle, $this> */
     public function cycle(): BelongsTo
     {
         return $this->belongsTo(MgrCycle::class, 'mgr_cycle_id');
     }
 
+    /** @return BelongsTo<MgrSlot, $this> */
     public function requesterSlot(): BelongsTo
     {
         return $this->belongsTo(MgrSlot::class, 'requester_slot_id');
     }
 
+    /** @return BelongsTo<MgrSlot, $this> */
     public function targetSlot(): BelongsTo
     {
         return $this->belongsTo(MgrSlot::class, 'target_slot_id');
