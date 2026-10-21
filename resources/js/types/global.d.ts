@@ -1,4 +1,4 @@
-import type { Auth } from '@/types/auth';
+import type { Auth, SharedGroup } from '@/types/auth';
 
 declare module 'react' {
     interface InputHTMLAttributes<T> {
@@ -11,8 +11,16 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            group: SharedGroup | null;
             sidebarOpen: boolean;
             [key: string]: unknown;
+        };
+        flashDataType: {
+            toast?: {
+                type: 'success' | 'info' | 'warning' | 'error';
+                message: string;
+            };
+            payment_key?: string;
         };
     }
 }

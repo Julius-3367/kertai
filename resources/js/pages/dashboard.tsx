@@ -1,36 +1,486 @@
-import { Head } from '@inertiajs/react';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
-import { dashboard } from '@/routes';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { CalendarDays, Megaphone, Smartphone } from 'lucide-react';
+import { FormDialog } from '@/components/kertai/actions';
+import { Field, Select } from '@/components/kertai/fields';
+import {
+    EmptyState,
+    Page,
+    PageHeader,
+    Progress,
+    Section,
+    StatCard,
+} from '@/components/kertai/page';
+import { StatusBadge } from '@/components/kertai/status-badge';
+import {
+    Num,
+    Table,
+    TBody,
+    TD,
+    TH,
+    THead,
+    TR,
+} from '@/components/kertai/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+    formatDate,
+    formatDateTime,
+    formatKes,
+    percent,
+    titleCase,
+} from '@/lib/format';
 
-export default function Dashboard() {
+type Props = {
+    me: {
+        savings: number;
+        prepayment: number;
+        outstanding: number;
+        arrears: number;
+        fines: number;
+        phone: string;
+        next_turn: {
+            cycle: string;
+            position: number;
+            date: string;
+            amount: number;
+        } | null;
+        recent_payments: {
+            id: number;
+            amount: number;
+            status: string;
+            channel: string;
+            purpose: string;
+            date: string;
+            receipt: string | null;
+        }[];
+    };
+    meetings: {
+        id: number;
+        title: string;
+        scheduled_at: string;
+        venue: string | null;
+    }[];
+    fundraisers: {
+        id: number;
+        title: string;
+        slug: string;
+        target: number;
+        raised: number;
+    }[];
+    finance: {
+        accounts: {
+            code: string;
+            name: string;
+            kind: string;
+            balance: number;
+        }[];
+        collected_this_month: number;
+        arrears: number;
+        members: number;
+        unmatched: number;
+        pending_stk: number;
+        awaiting_my_approval: number;
+        awaiting_payment: number;
+    } | null;
+    admin: {
+        failed_messages: number;
+        queued_messages: number;
+        members_without_login: number;
+    } | null;
+};
+
+export default function Dashboard({
+    me,
+    meetings,
+    fundraisers,
+    finance,
+    admin,
+}: Props) {
+    const { auth, group } = usePage().props;
+    const suggested = Math.max(0, Math.ceil(me.outstanding / 100));
+
     return (
         <>
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
+            <Page>
+                <PageHeader
+                    title={`Hello, ${auth.member?.name.split(' ')[0] ?? auth.user.name}`}
+                    description={
+                        auth.member?.positions.length
+                            ? auth.member.positions.join(' · ')
+                            : `Member ${auth.member?.member_number ?? ''}`
+                    }
+                    actions={
+                        <FormDialog
+                            title="Pay with M-Pesa"
+                            description="We will send an M-Pesa prompt to your phone. Enter your PIN to complete."
+                            action="/me/pay"
+                            submitLabel="Send prompt"
+                            initial={{
+                                amount: suggested > 0 ? String(suggested) : '',
+                                phone: me.phone,
+                                purpose: 'contribution',
+                            }}
+                            trigger={
+                                <Button>
+                                    <Smartphone /> Pay now
+                                </Button>
+                            }
+                        >
+                            {(form) => (
+                                <>
+                                    <Field
+                                        label="Amount (KES, whole shillings)"
+                                        htmlFor="pay-amount"
+                                        error={form.errors.amount}
+                                    >
+                                        <Input
+                                            id="pay-amount"
+                                            inputMode="numeric"
+                                            value={form.data.amount}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'amount',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </Field>
+                                    <Field
+                                        label="M-Pesa number"
+                                        htmlFor="pay-phone"
+                                        error={form.errors.phone}
+                                    >
+                                        <Input
+                                            id="pay-phone"
+                                            value={form.data.phone}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'phone',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </Field>
+                                    <Field
+                                        label="Paying for"
+                                        htmlFor="pay-purpose"
+                                    >
+                                        <Select
+                                            id="pay-purpose"
+                                            value={form.data.purpose}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'purpose',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            options={[
+                                                {
+                                                    value: 'contribution',
+                                                    label: 'Contributions, levies and fines',
+                                                },
+                                                {
+                                                    value: 'donation',
+                                                    label: 'Donation to the group fund',
+                                                },
+                                            ]}
+                                        />
+                                    </Field>
+                                    {group?.paybill && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Or pay through paybill{' '}
+                                            {group.paybill}, account{' '}
+                                            {group.paybill_account}.
+                                        </p>
+                                    )}
+                                </>
+                            )}
+                        </FormDialog>
+                    }
+                />
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <StatCard
+                        label="My savings"
+                        value={formatKes(me.savings)}
+                        tone="good"
+                    />
+                    <StatCard
+                        label="Arrears"
+                        value={formatKes(me.arrears)}
+                        tone={me.arrears > 0 ? 'bad' : 'good'}
+                        hint={
+                            me.fines > 0
+                                ? `Includes fines of ${formatKes(me.fines)}`
+                                : undefined
+                        }
+                    />
+                    <StatCard
+                        label="Owed this period"
+                        value={formatKes(me.outstanding)}
+                        tone={me.outstanding > 0 ? 'warn' : 'default'}
+                        hint={
+                            me.prepayment > 0
+                                ? `Paid in advance: ${formatKes(me.prepayment)}`
+                                : undefined
+                        }
+                    />
+                    <StatCard
+                        label="Next merry-go-round turn"
+                        value={
+                            me.next_turn ? formatDate(me.next_turn.date) : '—'
+                        }
+                        hint={
+                            me.next_turn
+                                ? `${me.next_turn.cycle}, turn ${me.next_turn.position}: ${formatKes(me.next_turn.amount)}`
+                                : 'Not in an active cycle'
+                        }
+                    />
                 </div>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+
+                {finance && (
+                    <Section
+                        title="Group finances"
+                        actions={
+                            <>
+                                {finance.awaiting_my_approval > 0 && (
+                                    <Button asChild size="sm">
+                                        <Link href="/payouts?status=mine">
+                                            {finance.awaiting_my_approval}{' '}
+                                            payout(s) need your approval
+                                        </Link>
+                                    </Button>
+                                )}
+                                {finance.unmatched > 0 && (
+                                    <Button asChild size="sm" variant="outline">
+                                        <Link href="/payments?status=unmatched">
+                                            {finance.unmatched} unmatched
+                                            payment(s)
+                                        </Link>
+                                    </Button>
+                                )}
+                            </>
+                        }
+                    >
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <StatCard
+                                label="Collected this month"
+                                value={formatKes(finance.collected_this_month)}
+                            />
+                            <StatCard
+                                label="Total arrears"
+                                value={formatKes(finance.arrears)}
+                                tone={finance.arrears > 0 ? 'warn' : 'good'}
+                            />
+                            <StatCard
+                                label="Active members"
+                                value={finance.members}
+                            />
+                            <StatCard
+                                label="Payouts to pay"
+                                value={finance.awaiting_payment}
+                                hint={
+                                    finance.pending_stk > 0
+                                        ? `${finance.pending_stk} M-Pesa prompts pending`
+                                        : undefined
+                                }
+                            />
+                        </div>
+                        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                            {(['asset', 'fund'] as const).map((kind) => (
+                                <div key={kind}>
+                                    <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+                                        {kind === 'asset'
+                                            ? 'Where the money is'
+                                            : 'What the money is for'}
+                                    </h3>
+                                    <Table>
+                                        <TBody>
+                                            {finance.accounts
+                                                .filter((a) => a.kind === kind)
+                                                .map((a) => (
+                                                    <TR key={a.code}>
+                                                        <TD>{a.name}</TD>
+                                                        <Num>
+                                                            {formatKes(
+                                                                a.balance,
+                                                            )}
+                                                        </Num>
+                                                    </TR>
+                                                ))}
+                                        </TBody>
+                                    </Table>
+                                </div>
+                            ))}
+                        </div>
+                    </Section>
+                )}
+
+                {admin &&
+                    (admin.failed_messages > 0 ||
+                        admin.members_without_login > 0) && (
+                        <Section title="Needs attention">
+                            <ul className="list-inside list-disc space-y-1 text-sm">
+                                {admin.failed_messages > 0 && (
+                                    <li>
+                                        {admin.failed_messages} messages failed
+                                        to send.{' '}
+                                        <Link
+                                            className="underline"
+                                            href="/messages?status=failed"
+                                        >
+                                            Review
+                                        </Link>
+                                    </li>
+                                )}
+                                {admin.members_without_login > 0 && (
+                                    <li>
+                                        {admin.members_without_login} active
+                                        members have no login yet.{' '}
+                                        <Link
+                                            className="underline"
+                                            href="/members"
+                                        >
+                                            Open the register
+                                        </Link>
+                                    </li>
+                                )}
+                            </ul>
+                        </Section>
+                    )}
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <Section
+                        title="Fundraisers"
+                        actions={
+                            <Button asChild size="sm" variant="outline">
+                                <Link href="/fundraisers">All</Link>
+                            </Button>
+                        }
+                    >
+                        {fundraisers.length === 0 ? (
+                            <EmptyState title="No active fundraisers" />
+                        ) : (
+                            <div className="space-y-4">
+                                {fundraisers.map((f) => (
+                                    <Link
+                                        key={f.id}
+                                        href={`/fundraisers/${f.id}`}
+                                        className="block space-y-1.5 rounded-lg p-2 hover:bg-muted/50"
+                                    >
+                                        <div className="flex items-center justify-between gap-2 text-sm">
+                                            <span className="flex items-center gap-2 font-medium">
+                                                <Megaphone className="size-4" />{' '}
+                                                {f.title}
+                                            </span>
+                                            <span className="text-muted-foreground">
+                                                {percent(f.raised, f.target)}%
+                                            </span>
+                                        </div>
+                                        <Progress
+                                            value={percent(f.raised, f.target)}
+                                        />
+                                        <div className="text-xs text-muted-foreground">
+                                            {formatKes(f.raised)} of{' '}
+                                            {formatKes(f.target)}
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </Section>
+
+                    <Section
+                        title="Upcoming meetings"
+                        actions={
+                            <Button asChild size="sm" variant="outline">
+                                <Link href="/meetings">All</Link>
+                            </Button>
+                        }
+                    >
+                        {meetings.length === 0 ? (
+                            <EmptyState title="No meetings scheduled" />
+                        ) : (
+                            <ul className="space-y-3">
+                                {meetings.map((m) => (
+                                    <li key={m.id}>
+                                        <Link
+                                            href={`/meetings/${m.id}`}
+                                            className="flex items-start gap-3 rounded-lg p-2 hover:bg-muted/50"
+                                        >
+                                            <CalendarDays className="mt-0.5 size-4 text-muted-foreground" />
+                                            <div className="text-sm">
+                                                <div className="font-medium">
+                                                    {m.title}
+                                                </div>
+                                                <div className="text-muted-foreground">
+                                                    {formatDateTime(
+                                                        m.scheduled_at,
+                                                    )}
+                                                    {m.venue
+                                                        ? ` · ${m.venue}`
+                                                        : ''}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </Section>
                 </div>
-            </div>
+
+                <Section
+                    title="My recent payments"
+                    actions={
+                        auth.member && (
+                            <Button asChild size="sm" variant="outline">
+                                <Link href={`/statements/${auth.member.id}`}>
+                                    Full statement
+                                </Link>
+                            </Button>
+                        )
+                    }
+                >
+                    {me.recent_payments.length === 0 ? (
+                        <EmptyState title="No payments yet" />
+                    ) : (
+                        <Table>
+                            <THead>
+                                <TR>
+                                    <TH>Date</TH>
+                                    <TH>For</TH>
+                                    <TH>Channel</TH>
+                                    <TH>Receipt</TH>
+                                    <TH>Status</TH>
+                                    <TH className="text-right">Amount</TH>
+                                </TR>
+                            </THead>
+                            <TBody>
+                                {me.recent_payments.map((p) => (
+                                    <TR key={p.id}>
+                                        <TD>{formatDate(p.date)}</TD>
+                                        <TD>{titleCase(p.purpose)}</TD>
+                                        <TD>{titleCase(p.channel)}</TD>
+                                        <TD className="font-mono text-xs">
+                                            {p.receipt ?? '—'}
+                                        </TD>
+                                        <TD>
+                                            <StatusBadge status={p.status} />
+                                        </TD>
+                                        <Num>{formatKes(p.amount)}</Num>
+                                    </TR>
+                                ))}
+                            </TBody>
+                        </Table>
+                    )}
+                </Section>
+            </Page>
         </>
     );
 }
 
 Dashboard.layout = {
-    breadcrumbs: [
-        {
-            title: 'Dashboard',
-            href: dashboard(),
-        },
-    ],
+    breadcrumbs: [{ title: 'Dashboard', href: '/dashboard' }],
 };

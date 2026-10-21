@@ -2,24 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
-     * Seed the application's database.
+     * Local and demo environments only. On the live server run
+     * `php artisan kertai:install` instead.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        if (app()->isProduction()) {
+            $this->command?->warn('Refusing to load demo data in production. Use php artisan kertai:install.');
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+            return;
+        }
+
+        $this->call(DemoSeeder::class);
     }
 }

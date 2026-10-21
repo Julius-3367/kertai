@@ -4,8 +4,11 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -41,6 +44,32 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::createUsersUsing(CreateNewUser::class);
+
+        // Members sign in with either their email or their phone number.
+        Fortify::authenticateUsing(function (Request $request): ?User {
+            $login = trim((string) $request->input(Fortify::username()));
+            $phone = Phone::normalize($login);
+
+            $user = User::query()
+                ->when(
+                    $phone !== null,
+                    fn ($q) => $q->where('phone', $phone),
+                    fn ($q) => $q->where('email', Str::lower($login)),
+                )
+                ->first();
+
+            if (! $user || ! Hash::check((string) $request->input('password'), $user->password)) {
+                return null;
+            }
+
+            if ($user->member && in_array($user->member->status, ['exited', 'deceased', 'suspended'], true)) {
+                return null;
+            }
+
+            $user->forceFill(['last_login_at' => now()])->saveQuietly();
+
+            return $user;
+        });
     }
 
     /**

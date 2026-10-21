@@ -1,7 +1,8 @@
 export type User = {
     id: number;
     name: string;
-    email: string;
+    email: string | null;
+    phone?: string | null;
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
@@ -10,8 +11,24 @@ export type User = {
     [key: string]: unknown;
 };
 
+export type AuthMember = {
+    id: number;
+    name: string;
+    member_number: string;
+    status: string;
+    positions: string[];
+};
+
 export type Auth = {
     user: User;
+    member: AuthMember | null;
+    permissions: string[];
+};
+
+export type SharedGroup = {
+    name: string;
+    paybill: string | null;
+    paybill_account: string | null;
 };
 
 export type Passkey = {

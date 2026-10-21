@@ -6,13 +6,13 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'Kertai';
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
-            case name === 'welcome':
+            case name === 'welcome' || name.startsWith('public/'):
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
@@ -32,9 +32,16 @@ void createInertiaApp({
         );
     },
     progress: {
-        color: '#4B5563',
+        color: '#047857',
     },
 });
+
+// Installable on phones; the worker only caches static build assets.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+        void navigator.serviceWorker.register('/sw.js');
+    });
+}
 
 // This will set light / dark mode on load...
 initializeTheme();

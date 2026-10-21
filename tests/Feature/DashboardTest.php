@@ -16,12 +16,27 @@ class DashboardTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    public function test_authenticated_users_can_visit_the_dashboard()
+    public function test_members_can_visit_the_dashboard()
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAs($this->member()->user);
 
-        $response = $this->get(route('dashboard'));
-        $response->assertOk();
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('dashboard')->where('finance', null));
+    }
+
+    public function test_officials_see_group_finances()
+    {
+        $this->actingAs($this->official('treasurer'));
+
+        $this->get(route('dashboard'))
+            ->assertInertia(fn ($page) => $page->has('finance.accounts', 9));
+    }
+
+    public function test_logins_not_linked_to_a_member_are_refused()
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('dashboard'))->assertForbidden();
     }
 }
