@@ -200,7 +200,7 @@ export default function ReportsIndex({
                             />
                         }
                     >
-                        <Table>
+                        <Table stack={false}>
                             <THead>
                                 <TR>
                                     <TH>Member</TH>

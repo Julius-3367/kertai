@@ -24,17 +24,24 @@ export function toShillings(cents: number | null | undefined): string {
     return (cents / 100).toFixed(cents % 100 === 0 ? 0 : 2);
 }
 
+// Times are the group's (Nairobi), whatever the phone or server is set to.
+// This also keeps the server-rendered page and the browser in agreement.
+const TIME_ZONE = 'Africa/Nairobi';
+
 export function formatDate(value: string | null | undefined): string {
     if (!value) {
         return '—';
     }
 
-    const date = new Date(value.length === 10 ? `${value}T00:00:00` : value);
+    // A bare date (2026-11-05) is a calendar day, not an instant.
+    const dateOnly = value.length === 10;
+    const date = new Date(dateOnly ? `${value}T00:00:00Z` : value);
 
     return date.toLocaleDateString('en-KE', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
+        timeZone: dateOnly ? 'UTC' : TIME_ZONE,
     });
 }
 
@@ -49,14 +56,15 @@ export function formatDateTime(value: string | null | undefined): string {
         year: 'numeric',
         hour: 'numeric',
         minute: '2-digit',
+        timeZone: TIME_ZONE,
     });
 }
 
+/** Today's date in Nairobi as YYYY-MM-DD. */
 export function today(): string {
-    const now = new Date();
-    const offset = now.getTimezoneOffset() * 60000;
-
-    return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+    return new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(
+        new Date(),
+    );
 }
 
 export function thisMonth(): string {

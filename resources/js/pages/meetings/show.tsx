@@ -47,6 +47,7 @@ type Props = {
         title: string;
         kind: string;
         scheduled_at: string;
+        scheduled_at_input: string;
         venue: string | null;
         agenda: string | null;
         minutes: string | null;
@@ -178,10 +179,11 @@ export default function MeetingShow({
                                         number: nextResolutionNumber,
                                         title: '',
                                         body: '',
-                                        adopted_on: meeting.scheduled_at.slice(
-                                            0,
-                                            10,
-                                        ),
+                                        adopted_on:
+                                            meeting.scheduled_at_input.slice(
+                                                0,
+                                                10,
+                                            ),
                                     }}
                                     trigger={
                                         <Button size="sm" variant="outline">
@@ -324,7 +326,7 @@ function DetailsForm({
     const form = useForm({
         title: meeting.title,
         kind: meeting.kind,
-        scheduled_at: meeting.scheduled_at,
+        scheduled_at: meeting.scheduled_at_input,
         venue: meeting.venue ?? '',
         agenda: meeting.agenda ?? '',
         minutes: meeting.minutes ?? '',

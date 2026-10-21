@@ -70,7 +70,9 @@ class MeetingController extends Controller
                 'id' => $meeting->id,
                 'title' => $meeting->title,
                 'kind' => $meeting->kind,
-                'scheduled_at' => $meeting->scheduled_at->format('Y-m-d\TH:i'),
+                // With offset for display; without it for the date-time picker.
+                'scheduled_at' => $meeting->scheduled_at->toIso8601String(),
+                'scheduled_at_input' => $meeting->scheduled_at->format('Y-m-d\TH:i'),
                 'venue' => $meeting->venue,
                 'agenda' => $meeting->agenda,
                 'minutes' => $meeting->minutes,

@@ -82,7 +82,7 @@ export default function Statement({ member, lines, summary, filters }: Props) {
                     }
                 />
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                     <StatCard
                         label="Savings"
                         value={formatKes(summary.savings)}

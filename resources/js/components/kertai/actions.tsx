@@ -177,14 +177,14 @@ export function Tabs<T extends string>({
     onChange: (value: T) => void;
 }) {
     return (
-        <div className="flex flex-wrap gap-1 border-b">
+        <div className="-mx-3 flex gap-1 overflow-x-auto border-b px-3 sm:mx-0 sm:flex-wrap sm:px-0">
             {tabs.map((tab) => (
                 <button
                     key={tab.value}
                     type="button"
                     onClick={() => onChange(tab.value)}
                     className={cn(
-                        '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                        '-mb-px shrink-0 border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
                         value === tab.value
                             ? 'border-primary text-foreground'
                             : 'border-transparent text-muted-foreground hover:text-foreground',

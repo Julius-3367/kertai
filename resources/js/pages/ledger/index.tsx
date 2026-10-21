@@ -454,7 +454,7 @@ export default function LedgerIndex({
                         </form>
                     }
                 >
-                    <Table>
+                    <Table stack={false}>
                         <THead>
                             <TR>
                                 <TH>No.</TH>
