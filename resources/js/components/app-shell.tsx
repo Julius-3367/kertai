@@ -1,7 +1,20 @@
-import { usePage } from '@inertiajs/react';
-import type { ReactNode } from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { router, usePage } from '@inertiajs/react';
+import { useEffect, type ReactNode } from 'react';
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import type { AppVariant } from '@/types';
+
+// On phones the sidebar is a drawer, and an Inertia page change doesn't close it,
+// so the new page loaded behind the open menu.
+function CloseMobileSidebarOnNavigate() {
+    const { setOpenMobile } = useSidebar();
+
+    useEffect(
+        () => router.on('navigate', () => setOpenMobile(false)),
+        [setOpenMobile],
+    );
+
+    return null;
+}
 
 type Props = {
     children: ReactNode;
@@ -17,5 +30,10 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
         );
     }
 
-    return <SidebarProvider defaultOpen={isOpen}>{children}</SidebarProvider>;
+    return (
+        <SidebarProvider defaultOpen={isOpen}>
+            <CloseMobileSidebarOnNavigate />
+            {children}
+        </SidebarProvider>
+    );
 }
