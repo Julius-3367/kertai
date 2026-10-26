@@ -29,6 +29,7 @@ export type SharedGroup = {
     name: string;
     paybill: string | null;
     paybill_account: string | null;
+    open_books: boolean;
 };
 
 export type Passkey = {

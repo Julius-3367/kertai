@@ -28,6 +28,7 @@ type Settings = {
     payout_approvals_required: number;
     mgr_skip_members_in_arrears: boolean;
     show_contributor_names_by_default: boolean;
+    members_see_group_finances: boolean;
     payer_pays_mpesa_fees: boolean;
     sms_costs_from_group_fund: boolean;
     project_profit_basis: string;
@@ -499,6 +500,14 @@ export default function RulesEdit({
                                 checked={s.show_contributor_names_by_default}
                                 onChange={(v) =>
                                     setS('show_contributor_names_by_default', v)
+                                }
+                            />
+                            <CheckField
+                                id="s-books"
+                                label="Every member can see the group finances: totals, who has paid each month and who is in arrears"
+                                checked={s.members_see_group_finances}
+                                onChange={(v) =>
+                                    setS('members_see_group_finances', v)
                                 }
                             />
                             <CheckField

@@ -25,6 +25,7 @@ final class GroupSettings
         'payout_approvals_required' => 2,
         'mgr_skip_members_in_arrears' => true,
         'show_contributor_names_by_default' => false,
+        'members_see_group_finances' => false,
         'payer_pays_mpesa_fees' => true,
         'sms_costs_from_group_fund' => true,
         'project_profit_basis' => 'contribution',
@@ -64,6 +65,15 @@ final class GroupSettings
         $date = $this->get('dues_start_on');
 
         return $date ? CarbonImmutable::parse($date)->startOfDay() : null;
+    }
+
+    /**
+     * Open books: every member can see the group totals, the contribution
+     * grid and who is in arrears. Off until the group agrees to it.
+     */
+    public function membersSeeGroupFinances(): bool
+    {
+        return (bool) $this->get('members_see_group_finances');
     }
 
     public function contributionAmount(): int

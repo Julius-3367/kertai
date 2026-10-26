@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { CalendarDays, Megaphone, Smartphone, Video } from 'lucide-react';
 import { FormDialog } from '@/components/kertai/actions';
+import { Meter } from '@/components/kertai/charts';
 import { Field, Select } from '@/components/kertai/fields';
 import {
     EmptyState,
@@ -83,6 +84,13 @@ type Props = {
         awaiting_my_approval: number;
         awaiting_payment: number;
     } | null;
+    books: {
+        held: number;
+        due_so_far: number;
+        paid_so_far: number;
+        arrears: number;
+        in_arrears: number;
+    } | null;
     admin: {
         failed_messages: number;
         queued_messages: number;
@@ -95,6 +103,7 @@ export default function Dashboard({
     meetings,
     fundraisers,
     finance,
+    books,
     admin,
 }: Props) {
     const { auth, group } = usePage().props;
@@ -240,6 +249,49 @@ export default function Dashboard({
                         }
                     />
                 </div>
+
+                {books && (
+                    <Section
+                        title="How the group is doing"
+                        actions={
+                            <Button asChild size="sm" variant="outline">
+                                <Link href="/group-finances">See all</Link>
+                            </Button>
+                        }
+                    >
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+                            <StatCard
+                                label="Held for the group"
+                                value={formatKes(books.held)}
+                                tone="good"
+                            />
+                            <StatCard
+                                label="Contributions paid this year"
+                                value={
+                                    books.due_so_far > 0
+                                        ? `${percent(books.paid_so_far, books.due_so_far)}%`
+                                        : '—'
+                                }
+                                hint={
+                                    books.due_so_far > 0 ? (
+                                        <Meter
+                                            value={books.paid_so_far}
+                                            max={books.due_so_far}
+                                        />
+                                    ) : (
+                                        'Nothing due yet'
+                                    )
+                                }
+                            />
+                            <StatCard
+                                label="Group arrears"
+                                value={formatKes(books.arrears)}
+                                tone={books.arrears > 0 ? 'warn' : 'good'}
+                                hint={`${books.in_arrears} ${books.in_arrears === 1 ? 'member' : 'members'}`}
+                            />
+                        </div>
+                    </Section>
+                )}
 
                 {finance && (
                     <Section

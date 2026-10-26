@@ -14,6 +14,7 @@ use App\Domain\Mgr\Models\MgrSlot;
 use App\Domain\Notifications\Models\OutboundMessage;
 use App\Domain\Payments\Models\Payment;
 use App\Domain\Payouts\Models\Payout;
+use App\Domain\Reports\Reports;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,7 +22,7 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request, MemberFinance $finance, Ledger $ledger): Response
+    public function __invoke(Request $request, MemberFinance $finance, Ledger $ledger, Reports $reports): Response
     {
         $user = $request->user();
         $member = $user->member;
@@ -72,8 +73,22 @@ class DashboardController extends Controller
                 ->get()
                 ->map(fn (Fundraiser $f) => ['id' => $f->id, 'title' => $f->title, 'slug' => $f->slug, 'target' => $f->target, 'raised' => $f->raised()]),
             'finance' => null,
+            'books' => null,
             'admin' => null,
         ];
+
+        if (! $user->hasPermission(Permission::FinanceView->value) && $this->group()->settings()->membersSeeGroupFinances()) {
+            $overview = $reports->overview(CarbonImmutable::today());
+            $arrears = collect($reports->arrears());
+
+            $props['books'] = [
+                'held' => (int) collect($overview['funds'])->sum('balance'),
+                'due_so_far' => $overview['totals']['due_so_far'],
+                'paid_so_far' => $overview['totals']['paid_so_far'],
+                'arrears' => (int) $arrears->sum('arrears'),
+                'in_arrears' => $arrears->count(),
+            ];
+        }
 
         if ($user->hasPermission(Permission::FinanceView->value)) {
             $monthStart = CarbonImmutable::today()->startOfMonth();

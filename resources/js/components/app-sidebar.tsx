@@ -5,6 +5,7 @@ import {
     BookOpenText,
     CalendarDays,
     ChartColumn,
+    ChartPie,
     FileText,
     HandCoins,
     HeartHandshake,
@@ -159,7 +160,7 @@ const sections: { label: string; items: Entry[] }[] = [
 ];
 
 export function AppSidebar() {
-    const { auth } = usePage().props;
+    const { auth, group } = usePage().props;
     const permissions = auth?.permissions ?? [];
     const memberId = auth?.member?.id;
 
@@ -175,6 +176,15 @@ export function AppSidebar() {
 
     const mine: Entry[] = memberId
         ? [
+              ...(group?.open_books
+                  ? [
+                        {
+                            title: 'Group finances',
+                            href: '/group-finances',
+                            icon: ChartPie,
+                        },
+                    ]
+                  : []),
               {
                   title: 'My statement',
                   href: `/statements/${memberId}`,

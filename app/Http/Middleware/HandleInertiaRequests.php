@@ -67,6 +67,7 @@ class HandleInertiaRequests extends Middleware
                 'name' => $group->name,
                 'paybill' => $group->paybill,
                 'paybill_account' => $group->paybill_account,
+                'open_books' => $group->settings()->membersSeeGroupFinances(),
             ] : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

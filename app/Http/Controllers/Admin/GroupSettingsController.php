@@ -71,6 +71,7 @@ class GroupSettingsController extends Controller
             'settings.payout_approvals_required' => ['required', 'integer', 'min:2', 'max:3'],
             'settings.mgr_skip_members_in_arrears' => ['boolean'],
             'settings.show_contributor_names_by_default' => ['boolean'],
+            'settings.members_see_group_finances' => ['boolean'],
             'settings.payer_pays_mpesa_fees' => ['boolean'],
             'settings.sms_costs_from_group_fund' => ['boolean'],
             'settings.project_profit_basis' => ['required', Rule::in(['contribution', 'equal'])],

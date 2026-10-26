@@ -13,6 +13,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,6 +35,26 @@ class ReportController extends Controller
             'grid' => $reports->contributionGrid($year),
             'arrears' => $reports->arrears(),
             'members' => $this->memberOptions(false),
+        ]);
+    }
+
+    /**
+     * The group's books as every member sees them, once the group has agreed
+     * to open them. No phone numbers; officials can preview it before then.
+     */
+    public function groupBooks(Request $request, Reports $reports): Response
+    {
+        abort_unless($this->group()->settings()->membersSeeGroupFinances() || $request->user()->hasPermission(Permission::FinanceView->value), 403);
+
+        $year = $request->integer('year') ?: CarbonImmutable::today()->year;
+
+        return Inertia::render('reports/group', [
+            'year' => $year,
+            'overview' => $reports->overview(CarbonImmutable::today()),
+            'grid' => $reports->contributionGrid($year),
+            'arrears' => collect($reports->arrears())
+                ->map(fn (array $r) => Arr::only($r, ['member_id', 'name', 'member_number', 'arrears', 'fines', 'oldest']))
+                ->all(),
         ]);
     }
 

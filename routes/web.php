@@ -63,6 +63,7 @@ Route::middleware(['auth', 'member'])->group(function () {
     Route::post('me/pay', [PaymentController::class, 'stk'])->middleware('throttle:stk')->name('me.pay');
     Route::put('me/preferences', [MemberController::class, 'preferences'])->name('me.preferences');
     Route::get('statements/{member}', [ReportController::class, 'statement'])->name('statements.show');
+    Route::get('group-finances', [ReportController::class, 'groupBooks'])->name('group.finances');
     Route::post('payments/{payment}/check', [PaymentController::class, 'check'])->name('payments.check');
     Route::get('mgr', [MgrController::class, 'index'])->name('mgr.index');
     Route::get('mgr/{cycle}', [MgrController::class, 'show'])->name('mgr.show')->whereNumber('cycle');

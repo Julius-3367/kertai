@@ -47,6 +47,14 @@ it('changes group rules only with a resolution, and logs who changed what', func
     $this->actingAs($this->official('treasurer'))->get('/rules')->assertForbidden();
 });
 
+it('opens the group books to members through the rules', function () {
+    $chair = $this->official('chairperson');
+
+    $this->actingAs($chair)->put('/rules', rulesPayload(['members_see_group_finances' => true]))->assertSessionHasNoErrors();
+
+    expect($this->group()->refresh()->settings()->membersSeeGroupFinances())->toBeTrue();
+});
+
 it('stores provider keys encrypted and never sends secrets back', function () {
     $admin = $this->official('system-admin');
 
