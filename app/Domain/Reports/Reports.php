@@ -128,7 +128,12 @@ final class Reports
      * The figures behind the overview charts: twelve months of money in and
      * out, this year's contributions month by month, and what each fund holds.
      *
-     * @return array<string, mixed>
+     * @return array{
+     *     cashflow: array<int, array{month: string, in: int, out: int}>,
+     *     contributions: array<int, array{month: string, due: int, paid: int}>,
+     *     funds: array<int, array{name: string, balance: int}>,
+     *     totals: array{collected: int, paid_out: int, due_so_far: int, paid_so_far: int},
+     * }
      */
     public function overview(CarbonImmutable $today): array
     {
