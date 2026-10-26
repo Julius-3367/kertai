@@ -94,6 +94,44 @@ it('charges the late fine once, after the grace period', function () {
         ->and(app(MemberFinance::class)->arrears($member))->toBe(0);
 });
 
+it('charges nothing before the start date and makes the first month due on it', function () {
+    $group = $this->group(['dues_start_on' => '2026-11-12']);
+    $member = $this->member();
+    $dues = app(GenerateMonthlyDues::class);
+    $fines = app(ApplyLateFines::class);
+
+    expect($dues->handle($group, '2026-10'))->toBe(0)
+        ->and($dues->handle($group, '2026-11'))->toBe(1)
+        ->and($dues->handle($group, '2026-12'))->toBe(1);
+
+    expect($member->dues()->where('period', '2026-11')->first()->due_on->toDateString())->toBe('2026-11-12')
+        ->and($member->dues()->where('period', '2026-12')->first()->due_on->toDateString())->toBe('2026-12-05');
+
+    expect($fines->handle($group, CarbonImmutable::parse('2026-11-12')))->toBe(0)
+        ->and($fines->handle($group, CarbonImmutable::parse('2026-11-13')))->toBe(1);
+});
+
+it('waives dues raised before the start date and leaves later ones alone', function () {
+    // Late fines are dated "today", so pin the clock before the start date.
+    $this->travelTo(CarbonImmutable::parse('2026-10-10'));
+    $group = $this->group();
+    $member = $this->member();
+    app(GenerateMonthlyDues::class)->handle($group, '2026-10');
+    app(ApplyLateFines::class)->handle($group, CarbonImmutable::parse('2026-10-10'));
+
+    $this->group(['dues_start_on' => '2026-11-12']);
+    app(GenerateMonthlyDues::class)->handle($group->refresh(), '2026-11');
+
+    $this->artisan('kertai:waive-before-start', ['--dry-run' => true])->assertSuccessful();
+    expect($member->dues()->where('status', 'waived')->count())->toBe(0);
+
+    $this->artisan('kertai:waive-before-start')->assertSuccessful();
+
+    expect($member->dues()->where('period', '2026-10')->pluck('status')->unique()->all())->toBe(['waived'])
+        ->and($member->dues()->where('period', '2026-11')->first()->status)->toBe('open')
+        ->and(app(MemberFinance::class)->arrears($member, CarbonImmutable::parse('2026-11-01')))->toBe(0);
+});
+
 it('lets the treasurer raise dues, apply fines and fine a member, and the chair waive', function () {
     $treasurer = $this->official('treasurer');
     $chair = $this->official('chairperson');

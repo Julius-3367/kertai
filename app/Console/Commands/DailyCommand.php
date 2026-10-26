@@ -40,15 +40,16 @@ class DailyCommand extends Command
 
                 $dueDay = min((int) $settings->get('contribution_due_day'), $today->daysInMonth);
                 $remindOn = $today->setDay($dueDay)->subDays((int) $settings->get('reminder_days_before'));
+                $started = ! $settings->duesStartOn()?->gt($today);
 
-                if ($today->isSameDay($remindOn)) {
+                if ($started && $today->isSameDay($remindOn)) {
                     $this->remindDue($group, $today, $notifier);
                 }
 
                 $fined = $fines->handle($group, $today);
                 $this->line("{$group->name}: {$fined} late fines");
 
-                if ($today->isMonday()) {
+                if ($started && $today->isMonday()) {
                     $this->remindArrears($group, $today, $notifier);
                 }
 

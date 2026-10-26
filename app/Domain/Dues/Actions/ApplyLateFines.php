@@ -26,6 +26,7 @@ final class ApplyLateFines
         }
 
         $cutoff = ($today ?? CarbonImmutable::today())->subDays((int) $settings->get('late_fine_grace_days'));
+        $start = $settings->duesStartOn();
         $count = 0;
 
         $late = Due::withoutGlobalScopes()
@@ -35,6 +36,7 @@ final class ApplyLateFines
             ->where('status', 'open')
             ->whereNull('fined_at')
             ->whereDate('due_on', '<', $cutoff->toDateString())
+            ->when($start, fn ($q) => $q->whereDate('due_on', '>=', $start->toDateString()))
             ->get();
 
         foreach ($late as $due) {

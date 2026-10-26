@@ -27,9 +27,14 @@ final class GenerateMonthlyDues
         $breakdown = $settings->contributionBreakdown();
         $amount = array_sum($breakdown);
         $created = 0;
+        $start = $settings->duesStartOn();
 
-        if ($amount <= 0) {
+        if ($amount <= 0 || ($start && $month->endOfMonth()->lt($start))) {
             return 0;
+        }
+
+        if ($start && $dueOn->lt($start)) {
+            $dueOn = $start;
         }
 
         $members = Member::withoutGlobalScopes()

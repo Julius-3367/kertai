@@ -62,6 +62,7 @@ class GroupSettingsController extends Controller
             'settings.mgr_share' => Money::rule(true, 0),
             'settings.welfare_share' => Money::rule(true, 0),
             'settings.contribution_due_day' => ['required', 'integer', 'min:1', 'max:28'],
+            'settings.dues_start_on' => ['nullable', 'date_format:Y-m-d'],
             'settings.late_fine_amount' => Money::rule(true, 0),
             'settings.late_fine_grace_days' => ['required', 'integer', 'min:0', 'max:60'],
             'settings.reminder_days_before' => ['required', 'integer', 'min:0', 'max:14'],

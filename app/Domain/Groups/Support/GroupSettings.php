@@ -2,6 +2,8 @@
 
 namespace App\Domain\Groups\Support;
 
+use Carbon\CarbonImmutable;
+
 /**
  * Group rules. Money values are cents. Every default here is the "standard
  * way" agreed for launch and can be changed from Settings, where the change
@@ -14,6 +16,7 @@ final class GroupSettings
         'mgr_share' => 50000,
         'welfare_share' => 20000,
         'contribution_due_day' => 5,
+        'dues_start_on' => null,
         'late_fine_amount' => 10000,
         'late_fine_grace_days' => 0,
         'reminder_days_before' => 2,
@@ -50,6 +53,17 @@ final class GroupSettings
     public function all(): array
     {
         return array_replace_recursive(self::DEFAULTS, $this->values);
+    }
+
+    /**
+     * The day the group started keeping its books in Kertai. Months before it
+     * are not charged, and the first month falls due on this day at the earliest.
+     */
+    public function duesStartOn(): ?CarbonImmutable
+    {
+        $date = $this->get('dues_start_on');
+
+        return $date ? CarbonImmutable::parse($date)->startOfDay() : null;
     }
 
     public function contributionAmount(): int

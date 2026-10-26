@@ -18,6 +18,7 @@ type Settings = {
     mgr_share: string;
     welfare_share: string;
     contribution_due_day: number;
+    dues_start_on: string | null;
     late_fine_amount: string;
     late_fine_grace_days: number;
     reminder_days_before: number;
@@ -259,6 +260,23 @@ export default function RulesEdit({
                                         setS(
                                             'contribution_due_day',
                                             Number(e.target.value),
+                                        )
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label="Contributions start on"
+                                htmlFor="s-start"
+                                error={err('settings.dues_start_on')}
+                            >
+                                <Input
+                                    id="s-start"
+                                    type="date"
+                                    value={s.dues_start_on ?? ''}
+                                    onChange={(e) =>
+                                        setS(
+                                            'dues_start_on',
+                                            e.target.value || null,
                                         )
                                     }
                                 />
