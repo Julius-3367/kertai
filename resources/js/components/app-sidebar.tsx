@@ -10,6 +10,7 @@ import {
     HandCoins,
     HeartHandshake,
     KeyRound,
+    Landmark,
     LayoutGrid,
     Megaphone,
     MessageSquare,
@@ -82,6 +83,12 @@ const sections: { label: string; items: Entry[] }[] = [
                 title: 'Reports',
                 href: '/reports',
                 icon: ChartColumn,
+                can: 'finance.view',
+            },
+            {
+                title: 'Loans',
+                href: '/loans',
+                icon: Landmark,
                 can: 'finance.view',
             },
             {
@@ -182,6 +189,15 @@ export function AppSidebar() {
                             title: 'Group finances',
                             href: '/group-finances',
                             icon: ChartPie,
+                        },
+                    ]
+                  : []),
+              ...(auth?.member?.has_loans || group?.loans_enabled
+                  ? [
+                        {
+                            title: 'My loans',
+                            href: '/me/loans',
+                            icon: HandCoins,
                         },
                     ]
                   : []),

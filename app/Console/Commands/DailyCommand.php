@@ -8,6 +8,8 @@ use App\Domain\Dues\Actions\GenerateMonthlyDues;
 use App\Domain\Dues\Models\Due;
 use App\Domain\Groups\CurrentGroup;
 use App\Domain\Groups\Models\Group;
+use App\Domain\Loans\LoanBook;
+use App\Domain\Loans\Models\Loan;
 use App\Domain\Meetings\Models\Meeting;
 use App\Domain\Members\Models\Member;
 use App\Domain\Notifications\Notifier;
@@ -18,7 +20,8 @@ use Illuminate\Console\Command;
 /**
  * The once-a-day jobs for every group: raise this month's dues on the 1st,
  * remind members before the due day, charge late fines, nudge members in
- * arrears weekly, and remind officials of compliance deadlines.
+ * arrears weekly, charge loan interest on each loan's monthly date, and
+ * remind officials of compliance deadlines.
  */
 class DailyCommand extends Command
 {
@@ -26,13 +29,13 @@ class DailyCommand extends Command
 
     protected $description = 'Raise dues, send reminders, apply late fines and compliance reminders';
 
-    public function handle(GenerateMonthlyDues $dues, ApplyLateFines $fines, Notifier $notifier, CurrentGroup $current): int
+    public function handle(GenerateMonthlyDues $dues, ApplyLateFines $fines, LoanBook $loans, Notifier $notifier, CurrentGroup $current): int
     {
         $date = $this->option('date');
         $today = is_string($date) && $date !== '' ? CarbonImmutable::parse($date) : CarbonImmutable::today();
 
         foreach (Group::all() as $group) {
-            $current->runAs($group, function () use ($group, $today, $dues, $fines, $notifier) {
+            $current->runAs($group, function () use ($group, $today, $dues, $fines, $loans, $notifier) {
                 $settings = $group->settings();
 
                 $raised = $dues->handle($group, $today->format('Y-m'));
@@ -51,6 +54,13 @@ class DailyCommand extends Command
 
                 if ($started && $today->isMonday()) {
                     $this->remindArrears($group, $today, $notifier);
+                }
+
+                $charged = $loans->accrue($group, $today);
+                $this->line("{$group->name}: interest charged on {$charged} loans");
+
+                if ($today->isMonday()) {
+                    $this->remindLoans($group, $today, $loans, $notifier);
                 }
 
                 $this->remindCompliance($group, $today, $notifier);
@@ -110,6 +120,32 @@ class DailyCommand extends Command
         }
 
         $this->line("{$group->name}: {$members->count()} arrears reminders");
+    }
+
+    /**
+     * Weekly nudge for loans past their final date or behind on instalments.
+     */
+    private function remindLoans(Group $group, CarbonImmutable $today, LoanBook $book, Notifier $notifier): void
+    {
+        $sent = 0;
+
+        foreach (Loan::query()->active()->with('member')->get() as $loan) {
+            $owed = $book->balance($loan);
+            $behind = $book->behind($loan, $owed['principal'], $today);
+
+            if ($owed['total'] <= 0 || (! $loan->isOverdue($today) && $behind <= 0)) {
+                continue;
+            }
+
+            $notifier->toMember($loan->member, 'loan_reminder', [
+                'loan' => $loan->reference(),
+                'balance' => Money::format($owed['total']),
+                'behind' => Money::format($loan->isOverdue($today) ? $owed['total'] : $behind),
+            ]);
+            $sent++;
+        }
+
+        $this->line("{$group->name}: {$sent} loan reminders");
     }
 
     private function remindCompliance(Group $group, CarbonImmutable $today, Notifier $notifier): void

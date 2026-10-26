@@ -32,6 +32,18 @@ import {
 } from '@/lib/format';
 
 type Props = {
+    loans: {
+        mine: {
+            id: number;
+            reference: string;
+            status: string;
+            owed: number;
+            due_on: string | null;
+            overdue: boolean;
+            behind: number;
+        }[];
+        asked: { loan_id: number; borrower: string; amount: number }[];
+    };
     me: {
         savings: number;
         prepayment: number;
@@ -99,6 +111,7 @@ type Props = {
 };
 
 export default function Dashboard({
+    loans,
     me,
     meetings,
     fundraisers,
@@ -108,6 +121,7 @@ export default function Dashboard({
 }: Props) {
     const { auth, group } = usePage().props;
     const suggested = Math.max(0, Math.ceil(me.outstanding / 100));
+    const running = loans.mine.filter((l) => l.status === 'active');
 
     return (
         <>
@@ -130,6 +144,7 @@ export default function Dashboard({
                                 amount: suggested > 0 ? String(suggested) : '',
                                 phone: me.phone,
                                 purpose: 'contribution',
+                                target_id: '',
                             }}
                             trigger={
                                 <Button>
@@ -179,18 +194,29 @@ export default function Dashboard({
                                     >
                                         <Select
                                             id="pay-purpose"
-                                            value={form.data.purpose}
-                                            onChange={(e) =>
-                                                form.setData(
-                                                    'purpose',
-                                                    e.target.value,
-                                                )
+                                            value={
+                                                form.data.purpose === 'loan'
+                                                    ? `loan-${form.data.target_id}`
+                                                    : form.data.purpose
                                             }
+                                            onChange={(e) => {
+                                                const [purpose, id] =
+                                                    e.target.value.split('-');
+                                                form.setData({
+                                                    ...form.data,
+                                                    purpose,
+                                                    target_id: id ?? '',
+                                                });
+                                            }}
                                             options={[
                                                 {
                                                     value: 'contribution',
                                                     label: 'Contributions, levies and fines',
                                                 },
+                                                ...running.map((l) => ({
+                                                    value: `loan-${l.id}`,
+                                                    label: `My loan ${l.reference} (${formatKes(l.owed)} owed)`,
+                                                })),
                                                 {
                                                     value: 'donation',
                                                     label: 'Donation to the group fund',
@@ -249,6 +275,77 @@ export default function Dashboard({
                         }
                     />
                 </div>
+
+                {loans.asked.length > 0 && (
+                    <Section
+                        title="Waiting for your answer"
+                        className="border-amber-300 dark:border-amber-800"
+                    >
+                        <ul className="space-y-2 text-sm">
+                            {loans.asked.map((a) => (
+                                <li key={a.loan_id}>
+                                    <Link
+                                        href={`/loans/${a.loan_id}`}
+                                        className="font-medium underline"
+                                    >
+                                        {a.borrower} asks you to guarantee{' '}
+                                        {formatKes(a.amount)} of their loan
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </Section>
+                )}
+
+                {loans.mine.length > 0 && (
+                    <Section
+                        title="My loans"
+                        actions={
+                            <Button asChild size="sm" variant="outline">
+                                <Link href="/me/loans">All</Link>
+                            </Button>
+                        }
+                    >
+                        <ul className="divide-y">
+                            {loans.mine.map((l) => (
+                                <li key={l.id}>
+                                    <Link
+                                        href={`/loans/${l.id}`}
+                                        className="flex items-center justify-between gap-3 py-2 text-sm hover:underline"
+                                    >
+                                        <span>
+                                            <span className="font-medium">
+                                                {l.reference}
+                                            </span>
+                                            <span className="block text-xs text-muted-foreground">
+                                                {l.status !== 'active'
+                                                    ? 'Application in progress'
+                                                    : l.overdue
+                                                      ? 'Past the date agreed'
+                                                      : l.behind > 0
+                                                        ? ` behind`
+                                                        : l.due_on
+                                                          ? `Due ${formatDate(l.due_on)}`
+                                                          : 'Running'}
+                                            </span>
+                                        </span>
+                                        <span
+                                            className={
+                                                l.overdue || l.behind > 0
+                                                    ? 'font-semibold text-red-700 dark:text-red-400'
+                                                    : 'font-semibold'
+                                            }
+                                        >
+                                            {l.status === 'active'
+                                                ? formatKes(l.owed)
+                                                : ''}
+                                        </span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </Section>
+                )}
 
                 {books && (
                     <Section

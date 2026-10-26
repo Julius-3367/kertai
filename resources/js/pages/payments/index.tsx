@@ -627,7 +627,21 @@ function RowActions({
                 )}
             {payment.status === 'succeeded' &&
                 payment.allocated &&
-                ['contribution', 'donation'].includes(payment.purpose) &&
+                ['contribution', 'loan', 'donation'].includes(
+                    payment.purpose,
+                ) &&
+                can('ledger.manage') && (
+                    <MoveDialog
+                        payment={payment}
+                        members={members}
+                        loans={targets.loan ?? []}
+                    />
+                )}
+            {payment.status === 'succeeded' &&
+                payment.allocated &&
+                ['contribution', 'loan', 'donation'].includes(
+                    payment.purpose,
+                ) &&
                 can('ledger.manage') && (
                     <FormDialog
                         title="Reverse payment"
@@ -660,6 +674,117 @@ function RowActions({
                     </FormDialog>
                 )}
         </div>
+    );
+}
+
+/**
+ * Keep the money but change what it paid for, e.g. a paybill payment
+ * matched as contributions that was meant for a loan.
+ */
+function MoveDialog({
+    payment,
+    members,
+    loans,
+}: {
+    payment: PaymentRow;
+    members: Option[];
+    loans: Option[];
+}) {
+    return (
+        <FormDialog
+            title="Change what it paid for"
+            description={` stays received; only where it goes changes.`}
+            action={`/payments/${payment.id}/reallocate`}
+            submitLabel="Move payment"
+            initial={{
+                purpose: payment.purpose === 'loan' ? 'contribution' : 'loan',
+                member_id: payment.member ? String(payment.member.id) : '',
+                target_id: '',
+                reason: '',
+            }}
+            trigger={
+                <Button size="sm" variant="ghost">
+                    Move
+                </Button>
+            }
+        >
+            {(form) => (
+                <>
+                    <Field
+                        label="Move it to"
+                        htmlFor={`mv-p-${payment.id}`}
+                        error={form.errors.purpose}
+                    >
+                        <Select
+                            id={`mv-p-${payment.id}`}
+                            value={form.data.purpose}
+                            onChange={(e) =>
+                                form.setData('purpose', e.target.value)
+                            }
+                            options={[
+                                {
+                                    value: 'contribution',
+                                    label: 'Contributions',
+                                },
+                                { value: 'loan', label: 'A loan repayment' },
+                                { value: 'donation', label: 'A donation' },
+                            ]}
+                        />
+                    </Field>
+                    {form.data.purpose === 'loan' ? (
+                        <Field
+                            label="Which loan"
+                            htmlFor={`mv-l-${payment.id}`}
+                            error={form.errors.target_id}
+                        >
+                            <Select
+                                id={`mv-l-${payment.id}`}
+                                value={form.data.target_id}
+                                onChange={(e) =>
+                                    form.setData('target_id', e.target.value)
+                                }
+                                placeholder={
+                                    loans.length ? 'Choose' : 'None running'
+                                }
+                                options={loans.map((l) => ({
+                                    value: l.id,
+                                    label: l.label,
+                                }))}
+                            />
+                        </Field>
+                    ) : (
+                        <Field
+                            label="Member"
+                            htmlFor={`mv-m-${payment.id}`}
+                            error={form.errors.member_id}
+                        >
+                            <MemberSelect
+                                id={`mv-m-${payment.id}`}
+                                members={members}
+                                placeholder="Not a member"
+                                value={form.data.member_id}
+                                onChange={(e) =>
+                                    form.setData('member_id', e.target.value)
+                                }
+                            />
+                        </Field>
+                    )}
+                    <Field
+                        label="Reason"
+                        htmlFor={`mv-r-${payment.id}`}
+                        error={form.errors.reason}
+                    >
+                        <Input
+                            id={`mv-r-${payment.id}`}
+                            value={form.data.reason}
+                            onChange={(e) =>
+                                form.setData('reason', e.target.value)
+                            }
+                        />
+                    </Field>
+                </>
+            )}
+        </FormDialog>
     );
 }
 

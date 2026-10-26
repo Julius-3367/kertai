@@ -8,6 +8,8 @@ use App\Domain\Groups\Models\Group;
 use App\Domain\Ledger\Ledger;
 use App\Domain\Ledger\Models\Account;
 use App\Domain\Ledger\Models\JournalLine;
+use App\Domain\Loans\LoanBook;
+use App\Domain\Loans\Models\Loan;
 use App\Domain\Meetings\Models\Meeting;
 use App\Domain\Members\MemberFinance;
 use App\Domain\Members\Models\Member;
@@ -122,6 +124,31 @@ final class Reports
             ->sortByDesc('arrears')
             ->values()
             ->all();
+    }
+
+    /**
+     * Running loans, biggest balance first. No phone numbers: this list is
+     * also shown to members when the group has opened its books.
+     *
+     * @return array<int, array{loan_id: int, member_id: int, name: string, member_number: string, reference: string, owed: int, due_on: string|null, overdue: bool, behind: int}>
+     */
+    public function loans(): array
+    {
+        $book = app(LoanBook::class);
+        $loans = Loan::query()->active()->with('member:id,name,member_number')->get();
+        $balances = $book->balances($loans->modelKeys());
+
+        return $loans->map(fn (Loan $l) => [
+            'loan_id' => $l->id,
+            'member_id' => $l->member_id,
+            'name' => $l->member->name,
+            'member_number' => $l->member->member_number,
+            'reference' => $l->reference(),
+            'owed' => $balances[$l->id]['total'],
+            'due_on' => $l->due_on?->toDateString(),
+            'overdue' => $l->isOverdue(),
+            'behind' => $book->behind($l, $balances[$l->id]['principal']),
+        ])->filter(fn (array $r) => $r['owed'] > 0)->sortByDesc('owed')->values()->all();
     }
 
     /**

@@ -29,6 +29,18 @@ type Settings = {
     mgr_skip_members_in_arrears: boolean;
     show_contributor_names_by_default: boolean;
     members_see_group_finances: boolean;
+    loans_enabled: boolean;
+    loan_interest_on: boolean;
+    loan_interest_rate: number | string;
+    loan_interest_method: string;
+    loan_interest_period: string;
+    loan_repayment_order: string;
+    loan_min_savings: string;
+    loan_savings_multiple: number | string;
+    loan_min_membership_months: number | string;
+    loan_max_term_months: number | string;
+    loan_guarantors_required: number | string;
+    loan_block_if_arrears: boolean;
     payer_pays_mpesa_fees: boolean;
     sms_costs_from_group_fund: boolean;
     project_profit_basis: string;
@@ -527,10 +539,225 @@ export default function RulesEdit({
                                 }
                             />
                         </div>
-                        <p className="mt-3 text-xs text-muted-foreground">
-                            Loans are switched off. They can be added later if
-                            the group decides to lend.
-                        </p>
+                    </Section>
+
+                    <Section
+                        title="Loans"
+                        description="Loans from before Kertai are repaid either way. These rules decide new lending and interest."
+                    >
+                        <div className="grid gap-3">
+                            <CheckField
+                                id="s-loans"
+                                label="Members can apply for new loans"
+                                checked={s.loans_enabled}
+                                onChange={(v) => setS('loans_enabled', v)}
+                            />
+                            <CheckField
+                                id="s-loan-interest"
+                                label="Charge interest on loans"
+                                hint="Untick to stop interest on every loan at once, so members repay principal only. Months with interest off are never charged later."
+                                checked={s.loan_interest_on}
+                                onChange={(v) => setS('loan_interest_on', v)}
+                            />
+                        </div>
+                        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                            <Field
+                                label="Interest rate for new loans (%)"
+                                htmlFor="s-loan-rate"
+                                error={err('settings.loan_interest_rate')}
+                                hint="Loans already given keep their own rate."
+                            >
+                                <Input
+                                    id="s-loan-rate"
+                                    inputMode="decimal"
+                                    value={s.loan_interest_rate}
+                                    onChange={(e) =>
+                                        setS(
+                                            'loan_interest_rate',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label="Charged"
+                                htmlFor="s-loan-period"
+                                error={err('settings.loan_interest_period')}
+                            >
+                                <Select
+                                    id="s-loan-period"
+                                    value={s.loan_interest_period}
+                                    onChange={(e) =>
+                                        setS(
+                                            'loan_interest_period',
+                                            e.target.value,
+                                        )
+                                    }
+                                    options={[
+                                        {
+                                            value: 'month',
+                                            label: 'Every month',
+                                        },
+                                        {
+                                            value: 'once',
+                                            label: 'Once, when lent',
+                                        },
+                                    ]}
+                                />
+                            </Field>
+                            <Field
+                                label="Worked out on"
+                                htmlFor="s-loan-method"
+                                error={err('settings.loan_interest_method')}
+                            >
+                                <Select
+                                    id="s-loan-method"
+                                    value={s.loan_interest_method}
+                                    onChange={(e) =>
+                                        setS(
+                                            'loan_interest_method',
+                                            e.target.value,
+                                        )
+                                    }
+                                    options={[
+                                        {
+                                            value: 'reducing',
+                                            label: 'What is left (reducing)',
+                                        },
+                                        {
+                                            value: 'flat',
+                                            label: 'The amount lent (flat)',
+                                        },
+                                    ]}
+                                />
+                            </Field>
+                            <Field
+                                label="Repayments clear first"
+                                htmlFor="s-loan-order"
+                                error={err('settings.loan_repayment_order')}
+                            >
+                                <Select
+                                    id="s-loan-order"
+                                    value={s.loan_repayment_order}
+                                    onChange={(e) =>
+                                        setS(
+                                            'loan_repayment_order',
+                                            e.target.value,
+                                        )
+                                    }
+                                    options={[
+                                        {
+                                            value: 'principal_first',
+                                            label: 'The principal',
+                                        },
+                                        {
+                                            value: 'interest_first',
+                                            label: 'The interest',
+                                        },
+                                    ]}
+                                />
+                            </Field>
+                            <Field
+                                label="Longest repayment period (months)"
+                                htmlFor="s-loan-term"
+                                error={err('settings.loan_max_term_months')}
+                            >
+                                <Input
+                                    id="s-loan-term"
+                                    inputMode="numeric"
+                                    value={s.loan_max_term_months}
+                                    onChange={(e) =>
+                                        setS(
+                                            'loan_max_term_months',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
+                        </div>
+                        <h3 className="mt-5 mb-2 text-sm font-medium">
+                            Who qualifies
+                        </h3>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field
+                                label="Savings (shares) needed before borrowing"
+                                htmlFor="s-loan-min"
+                                error={err('settings.loan_min_savings')}
+                            >
+                                <MoneyInput
+                                    id="s-loan-min"
+                                    value={s.loan_min_savings}
+                                    onChange={(e) =>
+                                        setS('loan_min_savings', e.target.value)
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label="Borrow up to this many times savings"
+                                htmlFor="s-loan-multiple"
+                                error={err('settings.loan_savings_multiple')}
+                                hint="0 means no limit by savings."
+                            >
+                                <Input
+                                    id="s-loan-multiple"
+                                    inputMode="decimal"
+                                    value={s.loan_savings_multiple}
+                                    onChange={(e) =>
+                                        setS(
+                                            'loan_savings_multiple',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label="Months a member before borrowing"
+                                htmlFor="s-loan-months"
+                                error={err(
+                                    'settings.loan_min_membership_months',
+                                )}
+                            >
+                                <Input
+                                    id="s-loan-months"
+                                    inputMode="numeric"
+                                    value={s.loan_min_membership_months}
+                                    onChange={(e) =>
+                                        setS(
+                                            'loan_min_membership_months',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label="Guarantors needed"
+                                htmlFor="s-loan-guarantors"
+                                error={err('settings.loan_guarantors_required')}
+                                hint="Together they cover whatever the borrower's own savings do not."
+                            >
+                                <Input
+                                    id="s-loan-guarantors"
+                                    inputMode="numeric"
+                                    value={s.loan_guarantors_required}
+                                    onChange={(e) =>
+                                        setS(
+                                            'loan_guarantors_required',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
+                        </div>
+                        <div className="mt-4">
+                            <CheckField
+                                id="s-loan-arrears"
+                                label="No new loan while a member has contribution arrears"
+                                checked={s.loan_block_if_arrears}
+                                onChange={(v) =>
+                                    setS('loan_block_if_arrears', v)
+                                }
+                            />
+                        </div>
                     </Section>
 
                     <Section title="Authority for this change">

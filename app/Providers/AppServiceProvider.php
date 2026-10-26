@@ -8,6 +8,7 @@ use App\Domain\Dues\Models\Due;
 use App\Domain\Fundraisers\Models\Fundraiser;
 use App\Domain\Groups\CurrentGroup;
 use App\Domain\Ledger\ChartOfAccounts;
+use App\Domain\Loans\Models\Loan;
 use App\Domain\Members\Models\Member;
 use App\Domain\Mgr\Models\MgrCycle;
 use App\Domain\Mgr\Models\MgrSlot;
@@ -56,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
             'sale' => Sale::class,
             'hire' => Hire::class,
             'fundraiser' => Fundraiser::class,
+            'loan' => Loan::class,
             'user' => User::class,
         ]);
     }

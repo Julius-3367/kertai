@@ -13,6 +13,8 @@ const TONES: Record<string, string> = {
     done: 'good',
     returned: 'good',
     completed: 'good',
+    cleared: 'good',
+    accepted: 'good',
     // in progress
     pending: 'warn',
     processing: 'warn',
@@ -22,6 +24,7 @@ const TONES: Record<string, string> = {
     booked: 'warn',
     out: 'warn',
     requested: 'warn',
+    submitted: 'warn',
     upcoming: 'neutral',
     scheduled: 'neutral',
     planning: 'neutral',
@@ -46,6 +49,8 @@ const TONES: Record<string, string> = {
     deceased: 'neutral',
     closed: 'neutral',
     waived: 'neutral',
+    released: 'neutral',
+    written_off: 'neutral',
 };
 
 const CLASSES: Record<string, string> = {
@@ -59,6 +64,9 @@ const LABELS: Record<string, string> = {
     pending_member: 'Waiting for member',
     pending_chair: 'Waiting for chair',
     payout_requested: 'Payout requested',
+    submitted: 'Awaiting approval',
+    written_off: 'Written off',
+    brought_forward: 'From before Kertai',
 };
 
 export function StatusBadge({

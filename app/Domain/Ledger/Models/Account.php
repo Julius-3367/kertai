@@ -56,6 +56,12 @@ class Account extends Model
      */
     public function isPerMember(): bool
     {
-        return in_array($this->purpose, ['savings', 'prepayments'], true);
+        return in_array($this->purpose, ['savings', 'prepayments', 'loans'], true);
+    }
+
+    /** Bank, M-Pesa and cash: money that can actually be paid out. */
+    public function isCash(): bool
+    {
+        return $this->isAsset() && $this->purpose !== 'loans';
     }
 }

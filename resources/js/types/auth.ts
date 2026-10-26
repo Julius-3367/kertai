@@ -17,6 +17,7 @@ export type AuthMember = {
     member_number: string;
     status: string;
     positions: string[];
+    has_loans: boolean;
 };
 
 export type Auth = {
@@ -30,6 +31,7 @@ export type SharedGroup = {
     paybill: string | null;
     paybill_account: string | null;
     open_books: boolean;
+    loans_enabled: boolean;
 };
 
 export type Passkey = {

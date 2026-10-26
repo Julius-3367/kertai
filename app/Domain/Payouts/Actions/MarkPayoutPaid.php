@@ -5,6 +5,8 @@ namespace App\Domain\Payouts\Actions;
 use App\Domain\Audit\Audit;
 use App\Domain\Ledger\ChartOfAccounts;
 use App\Domain\Ledger\Ledger;
+use App\Domain\Loans\LoanBook;
+use App\Domain\Loans\Models\Loan;
 use App\Domain\Members\Models\Member;
 use App\Domain\Mgr\Models\MgrSlot;
 use App\Domain\Notifications\Notifier;
@@ -28,6 +30,7 @@ final class MarkPayoutPaid
         private readonly ChartOfAccounts $accounts,
         private readonly RequestPayout $requests,
         private readonly Notifier $notifier,
+        private readonly LoanBook $loans,
     ) {}
 
     public function handle(Payout $payout, User $user, string $method, string $reference): Payout
@@ -110,6 +113,7 @@ final class MarkPayoutPaid
                 'payout_id' => $payout->id,
             ]),
             $payable instanceof Member && $payout->type === 'exit_refund' => $this->closeMembership($payable),
+            $payable instanceof Loan => $this->loans->disburse($payable, $payout),
             default => null,
         };
     }

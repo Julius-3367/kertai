@@ -19,7 +19,7 @@ use Inertia\Response;
  */
 class GroupSettingsController extends Controller
 {
-    private const MONEY_KEYS = ['contribution_amount', 'mgr_share', 'welfare_share', 'late_fine_amount'];
+    private const MONEY_KEYS = ['contribution_amount', 'mgr_share', 'welfare_share', 'late_fine_amount', 'loan_min_savings'];
 
     public function edit(): Response
     {
@@ -77,6 +77,18 @@ class GroupSettingsController extends Controller
             'settings.project_profit_basis' => ['required', Rule::in(['contribution', 'equal'])],
             'settings.share_out_month' => ['required', 'integer', 'min:1', 'max:12'],
             'settings.sms_sender_id' => ['required', 'string', 'max:11'],
+            'settings.loans_enabled' => ['sometimes', 'boolean'],
+            'settings.loan_interest_on' => ['sometimes', 'boolean'],
+            'settings.loan_interest_rate' => ['sometimes', 'numeric', 'min:0', 'max:100'],
+            'settings.loan_interest_method' => ['sometimes', Rule::in(['flat', 'reducing'])],
+            'settings.loan_interest_period' => ['sometimes', Rule::in(['month', 'once'])],
+            'settings.loan_repayment_order' => ['sometimes', Rule::in(['principal_first', 'interest_first'])],
+            'settings.loan_min_savings' => ['sometimes', ...Money::rule(true, 0)],
+            'settings.loan_savings_multiple' => ['sometimes', 'numeric', 'min:0', 'max:20'],
+            'settings.loan_min_membership_months' => ['sometimes', 'integer', 'min:0', 'max:120'],
+            'settings.loan_max_term_months' => ['sometimes', 'integer', 'min:1', 'max:60'],
+            'settings.loan_guarantors_required' => ['sometimes', 'integer', 'min:0', 'max:6'],
+            'settings.loan_block_if_arrears' => ['sometimes', 'boolean'],
             'settings.welfare_benefits' => ['required', 'array'],
             'settings.welfare_benefits.*' => Money::rule(true, 0),
             'resolution_reference' => ['required', 'string', 'max:60'],
@@ -88,7 +100,9 @@ class GroupSettingsController extends Controller
         $new = $data['settings'];
 
         foreach (self::MONEY_KEYS as $key) {
-            $new[$key] = $this->cents($new[$key]);
+            if (array_key_exists($key, $new)) {
+                $new[$key] = $this->cents($new[$key]);
+            }
         }
 
         foreach ($new['welfare_benefits'] as $key => $value) {
@@ -107,7 +121,6 @@ class GroupSettingsController extends Controller
         /** @var array<string, mixed> $new */
         $before = $group->settings()->all();
         $new['resolution_reference'] = $data['resolution_reference'];
-        $new['loans_enabled'] = false;
 
         $group->fill([
             ...$data['group'],

@@ -55,6 +55,7 @@ class ReportController extends Controller
             'arrears' => collect($reports->arrears())
                 ->map(fn (array $r) => Arr::only($r, ['member_id', 'name', 'member_number', 'arrears', 'fines', 'oldest']))
                 ->all(),
+            'loans' => $reports->loans(),
         ]);
     }
 

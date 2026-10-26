@@ -19,7 +19,7 @@ final class DefaultPositions
                 'is_official' => true,
                 'sort' => 10,
                 'permissions' => [
-                    P::MembersView, P::FinanceView, P::FinesWaive, P::PayoutsApprove, P::MgrApproveSwaps,
+                    P::MembersView, P::FinanceView, P::FinesWaive, P::LoansAdjust, P::PayoutsApprove, P::MgrApproveSwaps,
                     P::WelfareManage, P::FundraisersManage, P::ProjectsView, P::MeetingsManage,
                     P::MessagesSend, P::DocumentsManage, P::SettingsManage, P::PositionsManage, P::AuditView,
                 ],
@@ -43,7 +43,7 @@ final class DefaultPositions
                 'sort' => 30,
                 'permissions' => [
                     P::MembersView, P::FinanceView, P::PaymentsRecord, P::DuesManage, P::PayoutsRequest,
-                    P::PayoutsApprove, P::PayoutsPay, P::LedgerManage, P::MgrManage, P::FundraisersManage,
+                    P::PayoutsApprove, P::PayoutsPay, P::LedgerManage, P::LoansManage, P::MgrManage, P::FundraisersManage,
                     P::WelfareManage, P::ProjectsView, P::AssetsManage,
                 ],
             ],

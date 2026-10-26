@@ -54,6 +54,7 @@ class Payout extends Model
         'fundraiser' => 'Fundraiser disbursement',
         'exit_refund' => 'Exit refund',
         'share_out' => 'Share-out',
+        'loan' => 'Loan to member',
         'expense' => 'Group expense',
         'other' => 'Other',
     ];

@@ -2,6 +2,7 @@ import { Field, Select } from '@/components/kertai/fields';
 import type { Option } from '@/types/kertai';
 
 export type Targets = {
+    loan?: Option[];
     fundraiser: Option[];
     project: Option[];
     hire: Option[];
@@ -10,6 +11,7 @@ export type Targets = {
 
 export const PURPOSES = [
     { value: 'contribution', label: 'Contributions, levies and fines' },
+    { value: 'loan', label: 'Loan repayment' },
     { value: 'fundraiser', label: 'Fundraiser' },
     { value: 'project', label: 'Project contribution' },
     { value: 'sale', label: 'Payment for a sale' },

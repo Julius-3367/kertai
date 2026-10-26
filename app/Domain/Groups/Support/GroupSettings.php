@@ -30,7 +30,20 @@ final class GroupSettings
         'sms_costs_from_group_fund' => true,
         'project_profit_basis' => 'contribution',
         'share_out_month' => 12,
+        // Loans. New lending stays off until the group agrees to it; loans
+        // from before Kertai are recorded and repaid either way.
         'loans_enabled' => false,
+        'loan_interest_on' => false,
+        'loan_interest_rate' => 10,
+        'loan_interest_method' => 'reducing',
+        'loan_interest_period' => 'month',
+        'loan_repayment_order' => 'principal_first',
+        'loan_min_savings' => 0,
+        'loan_savings_multiple' => 3,
+        'loan_min_membership_months' => 6,
+        'loan_max_term_months' => 12,
+        'loan_guarantors_required' => 2,
+        'loan_block_if_arrears' => true,
         'sms_sender_id' => 'KERTAI006',
         'welfare_benefits' => [
             'member_death' => 5000000,
@@ -74,6 +87,32 @@ final class GroupSettings
     public function membersSeeGroupFinances(): bool
     {
         return (bool) $this->get('members_see_group_finances');
+    }
+
+    public function loansEnabled(): bool
+    {
+        return (bool) $this->get('loans_enabled');
+    }
+
+    /** The group-wide switch: when off, no loan is charged interest. */
+    public function loanInterestOn(): bool
+    {
+        return (bool) $this->get('loan_interest_on');
+    }
+
+    /**
+     * Terms a new loan starts with. Each loan keeps its own copy, so a later
+     * change of rate does not reach loans already given.
+     *
+     * @return array{interest_rate: float, interest_method: string, interest_period: string}
+     */
+    public function loanTerms(): array
+    {
+        return [
+            'interest_rate' => (float) $this->get('loan_interest_rate'),
+            'interest_method' => (string) $this->get('loan_interest_method'),
+            'interest_period' => (string) $this->get('loan_interest_period'),
+        ];
     }
 
     public function contributionAmount(): int

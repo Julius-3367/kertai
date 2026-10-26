@@ -21,7 +21,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $member_id
  * @property string $channel simulinkpay|paybill|cash|manual
  * @property string $status pending|processing|succeeded|failed|expired|cancelled
- * @property string $purpose contribution|fundraiser|project|sale|hire|donation
+ * @property string $purpose contribution|loan|fundraiser|project|sale|hire|donation
  * @property string|null $payable_type
  * @property int|null $payable_id
  * @property int $amount
@@ -47,7 +47,7 @@ class Payment extends Model
 
     public const CHANNELS = ['simulinkpay', 'paybill', 'cash', 'manual'];
 
-    public const PURPOSES = ['contribution', 'fundraiser', 'project', 'sale', 'hire', 'donation'];
+    public const PURPOSES = ['contribution', 'loan', 'fundraiser', 'project', 'sale', 'hire', 'donation'];
 
     protected $guarded = ['id'];
 
@@ -113,6 +113,7 @@ class Payment extends Model
     {
         return match ($this->purpose) {
             'contribution' => 'contributions',
+            'loan' => 'your loan',
             'fundraiser' => 'the fundraiser',
             'project' => 'project contribution',
             'sale' => 'a purchase',

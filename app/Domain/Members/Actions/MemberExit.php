@@ -8,6 +8,7 @@ use App\Domain\Dues\Models\Due;
 use App\Domain\Groups\Models\Group;
 use App\Domain\Ledger\ChartOfAccounts;
 use App\Domain\Ledger\Ledger;
+use App\Domain\Loans\LoanBook;
 use App\Domain\Members\Models\Member;
 use App\Domain\Payouts\Actions\RequestPayout;
 use App\Domain\Payouts\Models\Payout;
@@ -28,6 +29,7 @@ final class MemberExit
         private readonly ChartOfAccounts $accounts,
         private readonly DueAllocator $dues,
         private readonly RequestPayout $payouts,
+        private readonly LoanBook $loans,
     ) {}
 
     public function giveNotice(Member $member, string $reason, ?CarbonImmutable $on = null): Member
@@ -83,8 +85,13 @@ final class MemberExit
             throw new RuleViolation('An exit refund has already been raised for this member.');
         }
 
+        if ($member->status === 'exiting' && $this->loans->guaranteed($member) > 0) {
+            throw new RuleViolation("{$member->name} still guarantees other members' loans. Those loans must be cleared or the guarantees replaced first.");
+        }
+
         return DB::transaction(function () use ($member) {
             $this->dues->payFromSavings($member, 'Exit');
+            $this->loans->recoverFromOwnSavings($member, 'Member left the group');
 
             // Nothing more is owed once the member has left.
             Due::query()->where('member_id', $member->id)->where('type', 'contribution')->open()

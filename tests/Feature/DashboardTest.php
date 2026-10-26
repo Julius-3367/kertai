@@ -30,7 +30,7 @@ class DashboardTest extends TestCase
         $this->actingAs($this->official('treasurer'));
 
         $this->get(route('dashboard'))
-            ->assertInertia(fn ($page) => $page->has('finance.accounts', 9));
+            ->assertInertia(fn ($page) => $page->has('finance.accounts', 10));
     }
 
     public function test_logins_not_linked_to_a_member_are_refused()

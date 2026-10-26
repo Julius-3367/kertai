@@ -6,11 +6,14 @@ use App\Domain\Access\Permission;
 use App\Domain\Assets\Models\Hire;
 use App\Domain\Audit\Audit;
 use App\Domain\Fundraisers\Models\Fundraiser;
+use App\Domain\Loans\LoanBook;
+use App\Domain\Loans\Models\Loan;
 use App\Domain\Members\Models\Member;
 use App\Domain\Payments\Actions\AllocatePayment;
 use App\Domain\Payments\Actions\InitiateStkPayment;
 use App\Domain\Payments\Actions\ReconcilePendingPayments;
 use App\Domain\Payments\Actions\RecordPayment;
+use App\Domain\Payments\Actions\ReversePayment;
 use App\Domain\Payments\Models\Payment;
 use App\Domain\Projects\Models\Project;
 use App\Domain\Projects\Models\Sale;
@@ -83,6 +86,8 @@ class PaymentController extends Controller
         }
 
         $member = isset($data['member_id']) ? Member::find((int) $data['member_id']) : null;
+        $target = $this->target($data['purpose'], $data['target_id'] ?? null);
+        $member ??= $target instanceof Loan ? $target->member : null;
 
         $payment = $record->handle(
             $this->group(),
@@ -90,7 +95,7 @@ class PaymentController extends Controller
             $this->cents($data['amount']),
             $data['purpose'],
             $member,
-            $this->target($data['purpose'], $data['target_id'] ?? null),
+            $target,
             $data['reference'] ?? null,
             CarbonImmutable::parse($data['received_on']),
             $data['payer_name'] ?? null,
@@ -197,6 +202,32 @@ class PaymentController extends Controller
         return back();
     }
 
+    /**
+     * Keep the money but change what it paid for, e.g. a paybill payment
+     * matched as contributions that was meant for the member's loan.
+     */
+    public function reallocate(Request $request, Payment $payment, ReversePayment $reverse): RedirectResponse
+    {
+        $data = $request->validate([
+            'purpose' => ['required', Rule::in(['contribution', 'loan', 'donation'])],
+            'member_id' => ['nullable', 'integer', Rule::exists('members', 'id')->where('group_id', $this->group()->id)],
+            'target_id' => ['nullable', 'integer'],
+            'reason' => ['required', 'string', 'max:200'],
+        ]);
+
+        $target = $this->target($data['purpose'], $data['target_id'] ?? null);
+        $member = isset($data['member_id']) ? Member::find((int) $data['member_id']) : ($target instanceof Loan ? $target->member : $payment->member);
+
+        if ($data['purpose'] === 'contribution' && ! $member) {
+            throw new RuleViolation('Choose the member this contribution is from.');
+        }
+
+        $reverse->reallocate($payment, $data['purpose'], $member, $target, $data['reason']);
+        $this->toast('Payment moved to '.$payment->refresh()->purposeLabel().'.');
+
+        return back();
+    }
+
     private function authorizeView(Payment $payment): void
     {
         $user = request()->user();
@@ -214,6 +245,7 @@ class PaymentController extends Controller
             'project' => Project::class,
             'hire' => Hire::class,
             'sale' => Sale::class,
+            'loan' => Loan::class,
             default => null,
         };
 
@@ -225,9 +257,11 @@ class PaymentController extends Controller
             throw new RuleViolation('Choose which '.str_replace('_', ' ', $purpose).' this payment is for.');
         }
 
-        $target = $model === Sale::class
-            ? Sale::query()->whereHas('project')->find($id)
-            : $model::query()->find($id);
+        $target = match ($model) {
+            Sale::class => Sale::query()->whereHas('project')->find($id),
+            Loan::class => Loan::query()->active()->find($id),
+            default => $model::query()->find($id),
+        };
 
         return $target ?? throw new RuleViolation('That '.$purpose.' was not found.');
     }
@@ -239,7 +273,11 @@ class PaymentController extends Controller
      */
     private function targets(): array
     {
+        $loans = Loan::query()->active()->with('member:id,name,member_number')->orderBy('number')->get();
+        $balances = app(LoanBook::class)->balances($loans->modelKeys());
+
         return [
+            'loan' => $loans->map(fn (Loan $l) => ['id' => $l->id, 'label' => "{$l->member->name}: {$l->reference()} (".Money::format($balances[$l->id]['total']).' owed)'])->all(),
             'fundraiser' => Fundraiser::query()->whereIn('status', ['active', 'draft'])->get()->map(fn ($f) => ['id' => $f->id, 'label' => $f->title])->all(),
             'project' => Project::query()->where('status', '!=', 'closed')->get()->map(fn ($p) => ['id' => $p->id, 'label' => $p->name])->all(),
             'hire' => Hire::query()->with('asset')->whereIn('status', ['booked', 'out', 'returned'])->whereColumn('paid', '<', 'total')->get()

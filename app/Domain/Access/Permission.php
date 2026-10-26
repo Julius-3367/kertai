@@ -20,6 +20,8 @@ enum Permission: string
     case PayoutsApprove = 'payouts.approve';
     case PayoutsPay = 'payouts.pay';
     case LedgerManage = 'ledger.manage';
+    case LoansManage = 'loans.manage';
+    case LoansAdjust = 'loans.adjust';
     case MgrManage = 'mgr.manage';
     case MgrApproveSwaps = 'mgr.approve_swaps';
     case FundraisersManage = 'fundraisers.manage';
@@ -49,6 +51,8 @@ enum Permission: string
             self::PayoutsApprove => 'Approve payouts',
             self::PayoutsPay => 'Mark payouts as paid',
             self::LedgerManage => 'Transfers, reversals and opening balances',
+            self::LoansManage => 'Record loans and send applications for approval',
+            self::LoansAdjust => 'Change loan interest, waive, write off and recover loans',
             self::MgrManage => 'Run the merry-go-round',
             self::MgrApproveSwaps => 'Approve merry-go-round swaps',
             self::FundraisersManage => 'Manage fundraisers',
@@ -70,7 +74,7 @@ enum Permission: string
     {
         return in_array($this, [
             self::FinanceView, self::PaymentsRecord, self::DuesManage, self::FinesWaive,
-            self::PayoutsRequest, self::PayoutsApprove, self::PayoutsPay, self::LedgerManage,
+            self::PayoutsRequest, self::PayoutsApprove, self::PayoutsPay, self::LedgerManage, self::LoansManage, self::LoansAdjust,
             self::MgrManage, self::WelfareManage, self::FundraisersManage,
         ], true);
     }

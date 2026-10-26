@@ -8,6 +8,7 @@ use App\Domain\Groups\Models\Group;
 use App\Domain\Ledger\Ledger;
 use App\Domain\Ledger\Models\Account;
 use App\Domain\Ledger\Sequence;
+use App\Domain\Loans\LoanBook;
 use App\Domain\Members\Models\Member;
 use App\Domain\Notifications\Notifier;
 use App\Domain\Payouts\Models\Payout;
@@ -22,6 +23,7 @@ final class RequestPayout
     public function __construct(
         private readonly Ledger $ledger,
         private readonly Notifier $notifier,
+        private readonly LoanBook $loans,
     ) {}
 
     public function handle(
@@ -42,7 +44,9 @@ final class RequestPayout
             throw new RuleViolation('Amount must be more than zero.');
         }
 
-        if ($from->kind !== 'fund' || $from->group_id !== $group->id) {
+        // A loan leaves the bank but stays the group's money, so it is paid
+        // from "Loans to members" rather than out of a fund.
+        if (($from->kind !== 'fund' && $from->purpose !== 'loans') || $from->group_id !== $group->id) {
             throw new RuleViolation('Payouts must come from one of the group funds.');
         }
 
@@ -89,6 +93,16 @@ final class RequestPayout
 
     public function ensureFunds(Account $from, int $amount, ?Member $payee = null): void
     {
+        if ($from->purpose === 'loans') {
+            $available = $this->loans->lendable($from->group_id);
+
+            if ($available < $amount) {
+                throw new RuleViolation('The group can lend only '.Money::format($available).' right now.');
+            }
+
+            return;
+        }
+
         $available = $this->ledger->balance($from, $from->isPerMember() ? $payee?->id : null);
 
         if ($available < $amount) {

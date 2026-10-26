@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Groups\CurrentGroup;
+use App\Domain\Loans\Models\Loan;
+use App\Domain\Loans\Models\LoanGuarantor;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -60,6 +62,8 @@ class HandleInertiaRequests extends Middleware
                     'member_number' => $member->member_number,
                     'status' => $member->status,
                     'positions' => $member->positionNames(),
+                    'has_loans' => Loan::query()->where('member_id', $member->id)->exists()
+                        || LoanGuarantor::query()->where('member_id', $member->id)->exists(),
                 ] : null,
                 'permissions' => $user?->permissions() ?? [],
             ],
@@ -68,6 +72,7 @@ class HandleInertiaRequests extends Middleware
                 'paybill' => $group->paybill,
                 'paybill_account' => $group->paybill_account,
                 'open_books' => $group->settings()->membersSeeGroupFinances(),
+                'loans_enabled' => $group->settings()->loansEnabled(),
             ] : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

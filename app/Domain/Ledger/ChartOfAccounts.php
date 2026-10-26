@@ -15,6 +15,8 @@ final class ChartOfAccounts
 
     public const CASH = '1020';
 
+    public const LOANS = '1100';
+
     public const SAVINGS = '2000';
 
     public const PREPAYMENTS = '2010';
@@ -32,6 +34,8 @@ final class ChartOfAccounts
         self::BANK => ['name' => 'Equity Bank (paybill 247247)', 'kind' => 'asset', 'purpose' => 'bank'],
         self::MPESA => ['name' => 'SimulinkPay M-Pesa collections', 'kind' => 'asset', 'purpose' => 'mpesa'],
         self::CASH => ['name' => 'Cash on hand', 'kind' => 'asset', 'purpose' => 'cash'],
+        // Money lent out is still the group's: an asset owed back by members.
+        self::LOANS => ['name' => 'Loans to members', 'kind' => 'asset', 'purpose' => 'loans'],
         self::SAVINGS => ['name' => 'Member savings', 'kind' => 'fund', 'purpose' => 'savings'],
         self::PREPAYMENTS => ['name' => 'Member prepayments', 'kind' => 'fund', 'purpose' => 'prepayments'],
         self::MGR => ['name' => 'Merry-go-round pot', 'kind' => 'fund', 'purpose' => 'mgr'],

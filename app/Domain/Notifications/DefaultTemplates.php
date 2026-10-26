@@ -10,7 +10,7 @@ namespace App\Domain\Notifications;
 final class DefaultTemplates
 {
     /** Keys a member can switch off with "reminders off". Everything else always goes. */
-    public const REMINDERS = ['contribution_reminder', 'arrears_reminder', 'meeting_notice', 'meeting_reminder', 'mgr_turn'];
+    public const REMINDERS = ['contribution_reminder', 'arrears_reminder', 'loan_reminder', 'meeting_notice', 'meeting_reminder', 'mgr_turn'];
 
     /**
      * @return array<string, array{label: string, subject: string, en: string, sw: string}>
@@ -41,6 +41,30 @@ final class DefaultTemplates
                 'subject' => 'Fine charged: {amount}',
                 'en' => 'Dear {name}, a fine of {amount} has been charged: {reason}. {group}',
                 'sw' => 'Mpendwa {name}, umetozwa faini ya {amount}: {reason}. {group}',
+            ],
+            'loan_reminder' => [
+                'label' => 'Loan reminder',
+                'subject' => 'Loan {loan}: {behind} to pay',
+                'en' => 'Dear {name}, your loan {loan} has {balance} outstanding and {behind} is due now. Pay from the app or see the treasurer. {group}',
+                'sw' => 'Mpendwa {name}, mkopo wako {loan} una salio la {balance} na {behind} inadaiwa sasa. Lipa kupitia programu au mwone mweka hazina. {group}',
+            ],
+            'guarantor_request' => [
+                'label' => 'Asked to guarantee a loan',
+                'subject' => '{borrower} asks you to guarantee {amount}',
+                'en' => 'Dear {name}, {borrower} has asked you to guarantee {amount} of a {loan_amount} loan. Open {link} to accept or decline. {group}',
+                'sw' => 'Mpendwa {name}, {borrower} amekuomba udhamini {amount} wa mkopo wa {loan_amount}. Fungua {link} kukubali au kukataa. {group}',
+            ],
+            'guarantor_response' => [
+                'label' => 'Guarantor answered',
+                'subject' => '{guarantor} {answer} your guarantor request',
+                'en' => 'Dear {name}, {guarantor} has {answer} your request to guarantee loan {loan}. {link} {group}',
+                'sw' => 'Mpendwa {name}, {guarantor} amejibu ombi la kudhamini mkopo wako {loan}: {answer}. {link} {group}',
+            ],
+            'loan_ready' => [
+                'label' => 'Loan ready for approval',
+                'subject' => 'Loan {loan} is ready to send for approval',
+                'en' => 'Loan {loan} of {amount} for {borrower} has all its guarantors. Send it for approval: {link}',
+                'sw' => 'Mkopo {loan} wa {amount} kwa {borrower} una wadhamini wote. Upeleke kwa idhini: {link}',
             ],
             'payout_approval_needed' => [
                 'label' => 'Payout needs approval',

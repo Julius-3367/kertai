@@ -11,23 +11,52 @@ import type {
     Grid,
     Overview,
 } from '@/components/kertai/group-books';
-import { Page, PageHeader } from '@/components/kertai/page';
+import {
+    EmptyState,
+    Page,
+    PageHeader,
+    Section,
+} from '@/components/kertai/page';
+import { StatusBadge } from '@/components/kertai/status-badge';
+import {
+    Num,
+    Table,
+    TBody,
+    TD,
+    TH,
+    THead,
+    TR,
+} from '@/components/kertai/table';
 import { Input } from '@/components/ui/input';
+import { formatDate, formatKes } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 type Props = {
     year: number;
     overview: Overview;
     grid: Grid;
     arrears: ArrearsRow[];
+    loans: {
+        loan_id: number;
+        member_id: number;
+        name: string;
+        member_number: string;
+        reference: string;
+        owed: number;
+        due_on: string | null;
+        overdue: boolean;
+        behind: number;
+    }[];
 };
 
-type Tab = 'overview' | 'grid' | 'arrears';
+type Tab = 'overview' | 'grid' | 'arrears' | 'loans';
 
 export default function GroupFinances({
     year,
     overview,
     grid,
     arrears,
+    loans,
 }: Props) {
     const { auth } = usePage().props;
     const me = auth.member?.id;
@@ -53,6 +82,7 @@ export default function GroupFinances({
                             label: 'Arrears',
                             count: arrears.length,
                         },
+                        { value: 'loans', label: 'Loans', count: loans.length },
                     ]}
                 />
 
@@ -90,6 +120,68 @@ export default function GroupFinances({
 
                 {tab === 'arrears' && (
                     <ArrearsTable arrears={arrears} me={me} />
+                )}
+
+                {tab === 'loans' && (
+                    <Section
+                        title="Loans running"
+                        description="What each member still owes the group on loans."
+                    >
+                        {loans.length === 0 ? (
+                            <EmptyState title="No loans running" />
+                        ) : (
+                            <Table>
+                                <THead>
+                                    <TR>
+                                        <TH>Member</TH>
+                                        <TH>Due</TH>
+                                        <TH>Standing</TH>
+                                        <TH className="text-right">Owed</TH>
+                                    </TR>
+                                </THead>
+                                <TBody>
+                                    {loans.map((l) => (
+                                        <TR
+                                            key={l.loan_id}
+                                            className={cn(
+                                                l.member_id === me &&
+                                                    'bg-primary/5',
+                                            )}
+                                        >
+                                            <TD>
+                                                {l.name}{' '}
+                                                <span className="text-xs text-muted-foreground">
+                                                    {l.reference}
+                                                </span>
+                                            </TD>
+                                            <TD>{formatDate(l.due_on)}</TD>
+                                            <TD>
+                                                {l.overdue ? (
+                                                    <StatusBadge
+                                                        status="overdue"
+                                                        label="Past due date"
+                                                    />
+                                                ) : l.behind > 0 ? (
+                                                    <StatusBadge
+                                                        status="late"
+                                                        label={`Behind ${formatKes(l.behind)}`}
+                                                    />
+                                                ) : (
+                                                    <StatusBadge
+                                                        status="active"
+                                                        label="On track"
+                                                    />
+                                                )}
+                                            </TD>
+                                            <Num className="font-medium">
+                                                {formatKes(l.owed)}
+                                            </Num>
+                                        </TR>
+                                    ))}
+                                </TBody>
+                            </Table>
+                        )}
+                    </Section>
                 )}
             </Page>
         </>

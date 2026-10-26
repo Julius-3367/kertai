@@ -47,6 +47,22 @@ it('changes group rules only with a resolution, and logs who changed what', func
     $this->actingAs($this->official('treasurer'))->get('/rules')->assertForbidden();
 });
 
+it('saves the lending rules through the group rules', function () {
+    $chair = $this->official('chairperson');
+
+    $this->actingAs($chair)->put('/rules', rulesPayload([
+        'loans_enabled' => true, 'loan_interest_on' => false, 'loan_interest_rate' => '5', 'loan_min_savings' => '2500',
+        'loan_guarantors_required' => 3, 'loan_repayment_order' => 'interest_first',
+    ]))->assertSessionHasNoErrors();
+
+    $settings = $this->group()->refresh()->settings();
+    expect($settings->loansEnabled())->toBeTrue()
+        ->and($settings->loanInterestOn())->toBeFalse()
+        ->and($settings->loanTerms()['interest_rate'])->toBe(5.0)
+        ->and($settings->get('loan_min_savings'))->toBe(250000)
+        ->and($settings->get('loan_guarantors_required'))->toBe(3);
+});
+
 it('opens the group books to members through the rules', function () {
     $chair = $this->official('chairperson');
 

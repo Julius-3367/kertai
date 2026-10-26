@@ -7,6 +7,9 @@ use App\Domain\Dues\Models\Due;
 use App\Domain\Fundraisers\Models\Fundraiser;
 use App\Domain\Ledger\Ledger;
 use App\Domain\Ledger\Models\Account;
+use App\Domain\Loans\LoanBook;
+use App\Domain\Loans\Models\Loan;
+use App\Domain\Loans\Models\LoanGuarantor;
 use App\Domain\Meetings\Models\Meeting;
 use App\Domain\Members\MemberFinance;
 use App\Domain\Members\Models\Member;
@@ -22,7 +25,7 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request, MemberFinance $finance, Ledger $ledger, Reports $reports): Response
+    public function __invoke(Request $request, MemberFinance $finance, Ledger $ledger, Reports $reports, LoanBook $loanBook): Response
     {
         $user = $request->user();
         $member = $user->member;
@@ -34,7 +37,29 @@ class DashboardController extends Controller
             ->orderBy('scheduled_on')
             ->first();
 
+        $myLoans = Loan::query()->where('member_id', $member->id)->open()->orderBy('number')->get();
+        $myBalances = $loanBook->balances($myLoans->modelKeys());
+
         $props = [
+            'loans' => [
+                'mine' => $myLoans->map(fn (Loan $l) => [
+                    'id' => $l->id,
+                    'reference' => $l->reference(),
+                    'status' => $l->status,
+                    'owed' => $myBalances[$l->id]['total'],
+                    'due_on' => $l->due_on?->toDateString(),
+                    'overdue' => $l->isOverdue(),
+                    'behind' => $loanBook->behind($l, $myBalances[$l->id]['principal']),
+                ])->values(),
+                'asked' => LoanGuarantor::query()
+                    ->with(['loan' => fn ($q) => $q->with('member:id,name')])
+                    ->where('member_id', $member->id)
+                    ->where('status', 'pending')
+                    ->whereHas('loan', fn ($q) => $q->where('status', 'pending'))
+                    ->get()
+                    ->map(fn (LoanGuarantor $g) => ['loan_id' => $g->loan_id, 'borrower' => $g->loan->member->name, 'amount' => $g->amount])
+                    ->values(),
+            ],
             'me' => [
                 ...$finance->summary($member),
                 'next_turn' => $nextTurn ? [

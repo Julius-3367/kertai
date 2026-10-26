@@ -155,7 +155,7 @@ final class Ledger
             ->where('account_id', $account->id)
             ->whereNotNull('member_id')
             ->groupBy('member_id')
-            ->selectRaw('member_id, SUM(credit) - SUM(debit) as balance')
+            ->selectRaw($account->isAsset() ? 'member_id, SUM(debit) - SUM(credit) as balance' : 'member_id, SUM(credit) - SUM(debit) as balance')
             ->pluck('balance', 'member_id')
             ->map(fn ($v) => (int) $v)
             ->all();

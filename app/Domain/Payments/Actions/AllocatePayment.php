@@ -8,6 +8,9 @@ use App\Domain\Fundraisers\Models\Fundraiser;
 use App\Domain\Ledger\ChartOfAccounts;
 use App\Domain\Ledger\Ledger;
 use App\Domain\Ledger\Models\Account;
+use App\Domain\Loans\LoanBook;
+use App\Domain\Loans\Models\Loan;
+use App\Domain\Loans\Models\LoanTransaction;
 use App\Domain\Members\Models\Member;
 use App\Domain\Notifications\Notifier;
 use App\Domain\Payments\Models\Payment;
@@ -31,6 +34,7 @@ final class AllocatePayment
         private readonly ChartOfAccounts $accounts,
         private readonly DueAllocator $dues,
         private readonly Notifier $notifier,
+        private readonly LoanBook $loans,
     ) {}
 
     public function handle(Payment $payment, bool $notify = true): bool
@@ -69,6 +73,7 @@ final class AllocatePayment
             );
 
             $payment->forceFill(['allocated_at' => now(), 'journal_entry_id' => $entry->id])->save();
+            LoanTransaction::query()->where('payment_id', $payment->id)->whereNull('journal_entry_id')->update(['journal_entry_id' => $entry->id]);
 
             return $payment;
         });
@@ -100,6 +105,11 @@ final class AllocatePayment
         switch ($payment->purpose) {
             case 'contribution':
                 return $member ? $this->dues->settle($member, $amount) : null;
+
+            case 'loan':
+                $loan = Loan::withoutGlobalScopes()->find($payment->payable_id);
+
+                return $loan ? $this->loans->repay($loan, $amount, $payment, $member) : null;
 
             case 'fundraiser':
                 $fundraiser = Fundraiser::withoutGlobalScopes()->find($payment->payable_id);

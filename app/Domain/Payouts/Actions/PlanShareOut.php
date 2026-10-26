@@ -7,6 +7,8 @@ use App\Domain\Dues\Models\Due;
 use App\Domain\Groups\Models\Group;
 use App\Domain\Ledger\ChartOfAccounts;
 use App\Domain\Ledger\Ledger;
+use App\Domain\Loans\LoanBook;
+use App\Domain\Loans\Models\Loan;
 use App\Domain\Members\MemberFinance;
 use App\Domain\Members\Models\Member;
 use App\Domain\Payouts\Models\Payout;
@@ -28,6 +30,7 @@ final class PlanShareOut
         private readonly MemberFinance $finance,
         private readonly RequestPayout $requests,
         private readonly DueAllocator $dues,
+        private readonly LoanBook $loans,
     ) {}
 
     /**
@@ -44,7 +47,7 @@ final class PlanShareOut
 
         $rows = $members->map(function (Member $m) use ($savings, $totalSavings, $distribute) {
             $saved = max(0, (int) $savings[$m->id]);
-            $owed = $this->finance->arrears($m) + $this->dueToday($m);
+            $owed = $this->finance->arrears($m) + $this->dueToday($m) + $this->loanOwed($m);
             $bonus = $totalSavings > 0 ? intdiv($distribute * $saved, $totalSavings) : 0;
 
             return [
@@ -82,8 +85,9 @@ final class PlanShareOut
             foreach ($plan['rows'] as $row) {
                 $member = Member::findOrFail((int) $row['member_id']);
 
-                // Debts come out of savings first; what is left is paid out.
+                // Debts and loans come out of savings first; what is left is paid out.
                 $this->dues->payFromSavings($member, $label);
+                $this->loans->recoverFromOwnSavings($member, $label);
                 $fromSavings = $this->ledger->balance($savingsAccount, $member->id);
 
                 if ($fromSavings > 0) {
@@ -105,6 +109,13 @@ final class PlanShareOut
         }
 
         return ['batch' => $batch, 'count' => $count];
+    }
+
+    private function loanOwed(Member $member): int
+    {
+        $loans = Loan::query()->where('member_id', $member->id)->active()->pluck('id')->all();
+
+        return (int) collect($this->loans->balances($loans))->sum('total');
     }
 
     private function dueToday(Member $member): int

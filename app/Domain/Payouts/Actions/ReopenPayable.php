@@ -2,6 +2,8 @@
 
 namespace App\Domain\Payouts\Actions;
 
+use App\Domain\Loans\LoanApplications;
+use App\Domain\Loans\Models\Loan;
 use App\Domain\Mgr\Models\MgrSlot;
 use App\Domain\Payouts\Models\Payout;
 use App\Domain\Welfare\Models\WelfareCase;
@@ -22,6 +24,10 @@ final class ReopenPayable
 
         if ($payable instanceof WelfareCase && $payable->payout_id === $payout->id) {
             $payable->forceFill(['status' => 'approved', 'payout_id' => null])->save();
+        }
+
+        if ($payable instanceof Loan) {
+            LoanApplications::payoutClosed($payable, $payout);
         }
     }
 }

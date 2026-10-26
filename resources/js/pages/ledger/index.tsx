@@ -70,6 +70,8 @@ export default function LedgerIndex({
     const [q, setQ] = useState(filters.q ?? '');
     const [open, setOpen] = useState<number | null>(null);
     const assets = accounts.filter((a) => a.kind === 'asset');
+    // Money lent out cannot be moved or opened here; loans have their own page.
+    const cash = assets.filter((a) => a.purpose !== 'loans');
     const funds = accounts.filter((a) => a.kind === 'fund');
     const balanced = totals.assets === totals.funds;
 
@@ -90,10 +92,10 @@ export default function LedgerIndex({
                                     submitLabel="Record transfer"
                                     initial={{
                                         from_account_id: String(
-                                            assets[2]?.id ?? '',
+                                            cash[2]?.id ?? '',
                                         ),
                                         to_account_id: String(
-                                            assets[0]?.id ?? '',
+                                            cash[0]?.id ?? '',
                                         ),
                                         amount: '',
                                         description: 'Cash banked',
@@ -129,7 +131,7 @@ export default function LedgerIndex({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        options={assets.map(
+                                                        options={cash.map(
                                                             (a) => ({
                                                                 value: a.id,
                                                                 label: a.name,
@@ -157,7 +159,7 @@ export default function LedgerIndex({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        options={assets.map(
+                                                        options={cash.map(
                                                             (a) => ({
                                                                 value: a.id,
                                                                 label: a.name,
@@ -246,7 +248,7 @@ export default function LedgerIndex({
                                     submitLabel="Post"
                                     initial={{
                                         asset_account_id: String(
-                                            assets[0]?.id ?? '',
+                                            cash[0]?.id ?? '',
                                         ),
                                         fund_account_id: String(
                                             funds[0]?.id ?? '',
@@ -283,12 +285,10 @@ export default function LedgerIndex({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    options={assets.map(
-                                                        (a) => ({
-                                                            value: a.id,
-                                                            label: a.name,
-                                                        }),
-                                                    )}
+                                                    options={cash.map((a) => ({
+                                                        value: a.id,
+                                                        label: a.name,
+                                                    }))}
                                                 />
                                             </Field>
                                             <Field

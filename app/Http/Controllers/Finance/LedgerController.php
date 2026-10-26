@@ -112,8 +112,8 @@ class LedgerController extends Controller
     {
         $groupId = $this->group()->id;
         $data = $request->validate([
-            'from_account_id' => ['required', 'integer', Rule::exists('accounts', 'id')->where('group_id', $groupId)->where('kind', 'asset')],
-            'to_account_id' => ['required', 'integer', 'different:from_account_id', Rule::exists('accounts', 'id')->where('group_id', $groupId)->where('kind', 'asset')],
+            'from_account_id' => ['required', 'integer', Rule::exists('accounts', 'id')->where('group_id', $groupId)->where('kind', 'asset')->whereNot('purpose', 'loans')],
+            'to_account_id' => ['required', 'integer', 'different:from_account_id', Rule::exists('accounts', 'id')->where('group_id', $groupId)->where('kind', 'asset')->whereNot('purpose', 'loans')],
             'amount' => Money::rule(),
             'description' => ['required', 'string', 'max:200'],
             'reference' => ['nullable', 'string', 'max:100'],
@@ -146,7 +146,9 @@ class LedgerController extends Controller
     {
         $groupId = $this->group()->id;
         $data = $request->validate([
-            'asset_account_id' => ['required', 'integer', Rule::exists('accounts', 'id')->where('group_id', $groupId)->where('kind', 'asset')],
+            // Loans brought forward are entered from the Loans page so each
+            // one has its own book.
+            'asset_account_id' => ['required', 'integer', Rule::exists('accounts', 'id')->where('group_id', $groupId)->where('kind', 'asset')->whereNot('purpose', 'loans')],
             'fund_account_id' => ['required', 'integer', Rule::exists('accounts', 'id')->where('group_id', $groupId)->where('kind', 'fund')],
             'member_id' => ['nullable', 'integer', Rule::exists('members', 'id')->where('group_id', $groupId)],
             'amount' => Money::rule(),

@@ -13,6 +13,7 @@ use App\Http\Controllers\Auth\FirstPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Finance\DueController;
 use App\Http\Controllers\Finance\LedgerController;
+use App\Http\Controllers\Finance\LoanController;
 use App\Http\Controllers\Finance\PaymentController;
 use App\Http\Controllers\Finance\PayoutController;
 use App\Http\Controllers\Finance\ReportController;
@@ -64,6 +65,12 @@ Route::middleware(['auth', 'member'])->group(function () {
     Route::put('me/preferences', [MemberController::class, 'preferences'])->name('me.preferences');
     Route::get('statements/{member}', [ReportController::class, 'statement'])->name('statements.show');
     Route::get('group-finances', [ReportController::class, 'groupBooks'])->name('group.finances');
+    Route::get('me/loans', [LoanController::class, 'mine'])->name('loans.mine');
+    Route::get('me/loans/apply', [LoanController::class, 'create'])->name('loans.create');
+    Route::post('me/loans', [LoanController::class, 'store'])->name('loans.apply');
+    Route::get('loans/{loan}', [LoanController::class, 'show'])->name('loans.show')->whereNumber('loan');
+    Route::post('loans/{loan}/guarantee', [LoanController::class, 'respond'])->name('loans.guarantee');
+    Route::post('loans/{loan}/withdraw', [LoanController::class, 'withdraw'])->name('loans.withdraw');
     Route::post('payments/{payment}/check', [PaymentController::class, 'check'])->name('payments.check');
     Route::get('mgr', [MgrController::class, 'index'])->name('mgr.index');
     Route::get('mgr/{cycle}', [MgrController::class, 'show'])->name('mgr.show')->whereNumber('cycle');
@@ -117,6 +124,20 @@ Route::middleware(['auth', 'member'])->group(function () {
         Route::get('reports/arrears.csv', [ReportController::class, 'arrearsCsv'])->name('reports.arrears');
         Route::get('fundraisers/{fundraiser}/export', [FundraiserController::class, 'export'])->name('fundraisers.export');
         Route::get('share-out', [ShareOutController::class, 'index'])->name('share-out.index');
+        Route::get('loans', [LoanController::class, 'index'])->name('loans.index');
+    });
+
+    // Loans
+    Route::middleware('can:'.P::LoansManage->value)->group(function () {
+        Route::post('loans', [LoanController::class, 'bringForward'])->name('loans.store');
+        Route::post('loans/{loan}/submit', [LoanController::class, 'submit'])->name('loans.submit');
+        Route::post('loans/{loan}/reject', [LoanController::class, 'reject'])->name('loans.reject');
+    });
+
+    Route::middleware('can:'.P::LoansAdjust->value)->group(function () {
+        Route::post('loans/{loan}/interest', [LoanController::class, 'interest'])->name('loans.interest');
+        Route::post('loans/{loan}/waive', [LoanController::class, 'waive'])->name('loans.waive');
+        Route::post('loans/{loan}/recover', [LoanController::class, 'recover'])->name('loans.recover');
     });
 
     // Money: write
@@ -142,6 +163,7 @@ Route::middleware(['auth', 'member'])->group(function () {
         Route::post('ledger/opening', [LedgerController::class, 'opening'])->name('ledger.opening');
         Route::post('ledger/entries/{entry}/reverse', [LedgerController::class, 'reverse'])->name('ledger.reverse');
         Route::post('payments/{payment}/reverse', [LedgerController::class, 'reversePayment'])->name('payments.reverse');
+        Route::post('payments/{payment}/reallocate', [PaymentController::class, 'reallocate'])->name('payments.reallocate');
     });
 
     Route::post('payouts', [PayoutController::class, 'store'])->middleware('can:'.P::PayoutsRequest->value)->name('payouts.store');
