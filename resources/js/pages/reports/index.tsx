@@ -2,12 +2,21 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Download, FileBarChart } from 'lucide-react';
 import { useState } from 'react';
 import { Tabs } from '@/components/kertai/actions';
+import {
+    BarList,
+    ChartTable,
+    ColumnChart,
+    Legend,
+    Meter,
+    monthLabel,
+} from '@/components/kertai/charts';
 import { MemberSelect } from '@/components/kertai/fields';
 import {
     EmptyState,
     Page,
     PageHeader,
     Section,
+    StatCard,
 } from '@/components/kertai/page';
 import {
     Num,
@@ -20,12 +29,25 @@ import {
 } from '@/components/kertai/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatDate, formatKes } from '@/lib/format';
+import { formatDate, formatKes, percent } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Option } from '@/types/kertai';
 
+type Overview = {
+    cashflow: { month: string; in: number; out: number }[];
+    contributions: { month: string; due: number; paid: number }[];
+    funds: { name: string; balance: number }[];
+    totals: {
+        collected: number;
+        paid_out: number;
+        due_so_far: number;
+        paid_so_far: number;
+    };
+};
+
 type Props = {
     filters: { from: string; to: string; year: number };
+    overview: Overview;
     funds: {
         code: string;
         name: string;
@@ -63,17 +85,18 @@ type Props = {
     members: Option[];
 };
 
-type Tab = 'funds' | 'grid' | 'arrears' | 'trial' | 'statements';
+type Tab = 'overview' | 'funds' | 'grid' | 'arrears' | 'trial' | 'statements';
 
 export default function ReportsIndex({
     filters,
+    overview,
     funds,
     trial,
     grid,
     arrears,
     members,
 }: Props) {
-    const [tab, setTab] = useState<Tab>('funds');
+    const [tab, setTab] = useState<Tab>('overview');
     const [member, setMember] = useState('');
     const apply = (next: Partial<Props['filters']>) =>
         router.get(
@@ -101,6 +124,7 @@ export default function ReportsIndex({
                     value={tab}
                     onChange={setTab}
                     tabs={[
+                        { value: 'overview', label: 'Overview' },
                         { value: 'funds', label: 'Funds' },
                         { value: 'grid', label: 'Contribution grid' },
                         {
@@ -112,6 +136,14 @@ export default function ReportsIndex({
                         { value: 'statements', label: 'Member statements' },
                     ]}
                 />
+
+                {tab === 'overview' && (
+                    <OverviewTab
+                        overview={overview}
+                        arrears={arrears}
+                        onAllArrears={() => setTab('arrears')}
+                    />
+                )}
 
                 {tab === 'funds' && (
                     <Section
@@ -395,6 +427,210 @@ export default function ReportsIndex({
                 )}
             </Page>
         </>
+    );
+}
+
+function OverviewTab({
+    overview,
+    arrears,
+    onAllArrears,
+}: {
+    overview: Overview;
+    arrears: Props['arrears'];
+    onAllArrears: () => void;
+}) {
+    const { cashflow, contributions, funds, totals } = overview;
+    const year = contributions[0]?.month.slice(0, 4);
+    const owed = arrears.reduce((sum, a) => sum + a.arrears, 0);
+    const fundTotal = funds.reduce((sum, f) => sum + f.balance, 0);
+    const raised = contributions.filter((c) => c.due > 0);
+    const hasCashflow = cashflow.some((c) => c.in > 0 || c.out > 0);
+    const money = [
+        { label: 'Money in', color: 'var(--viz-1)' },
+        { label: 'Money out', color: 'var(--viz-2)' },
+    ];
+
+    return (
+        <div className="grid min-w-0 gap-4 *:min-w-0">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <StatCard
+                    label={`Collected in ${year}`}
+                    value={formatKes(totals.collected)}
+                    tone="good"
+                />
+                <StatCard
+                    label={`Paid out in ${year}`}
+                    value={formatKes(totals.paid_out)}
+                />
+                <StatCard
+                    label="Contributions paid"
+                    value={
+                        totals.due_so_far > 0
+                            ? `${percent(totals.paid_so_far, totals.due_so_far)}%`
+                            : '—'
+                    }
+                    hint={
+                        totals.due_so_far > 0 ? (
+                            <>
+                                {formatKes(totals.paid_so_far)} of{' '}
+                                {formatKes(totals.due_so_far)} due so far
+                                <Meter
+                                    value={totals.paid_so_far}
+                                    max={totals.due_so_far}
+                                />
+                            </>
+                        ) : (
+                            'Nothing due yet'
+                        )
+                    }
+                />
+                <StatCard
+                    label="Arrears"
+                    value={formatKes(owed)}
+                    tone={owed > 0 ? 'bad' : 'default'}
+                    hint={`${arrears.length} ${arrears.length === 1 ? 'member' : 'members'}`}
+                />
+            </div>
+
+            <Section
+                title="Money in and out"
+                description="The last 12 months. Tap a month to see the figures."
+            >
+                {hasCashflow ? (
+                    <>
+                        <Legend items={money} />
+                        <div className="mt-2">
+                            <ColumnChart
+                                label="Money in and out over the last 12 months"
+                                months={cashflow.map((c) => c.month)}
+                                series={[
+                                    {
+                                        ...money[0],
+                                        values: cashflow.map((c) => c.in),
+                                    },
+                                    {
+                                        ...money[1],
+                                        values: cashflow.map((c) => c.out),
+                                    },
+                                ]}
+                            />
+                        </div>
+                        <ChartTable
+                            columns={['Month', 'In', 'Out']}
+                            rows={cashflow.map((c) => ({
+                                key: c.month,
+                                cells: [
+                                    monthLabel(c.month, 'long'),
+                                    formatKes(c.in),
+                                    formatKes(c.out),
+                                ],
+                            }))}
+                        />
+                    </>
+                ) : (
+                    <EmptyState title="No money recorded yet" />
+                )}
+            </Section>
+
+            <Section
+                title={`Contributions ${year}`}
+                description="What members paid against what was due, month by month."
+            >
+                {raised.length > 0 ? (
+                    <>
+                        <Legend
+                            items={[
+                                { label: 'Paid', color: 'var(--viz-1)' },
+                                { label: 'Due', color: 'var(--viz-track)' },
+                            ]}
+                        />
+                        <div className="mt-2">
+                            <ColumnChart
+                                label={`Contributions paid against due in ${year}`}
+                                months={contributions.map((c) => c.month)}
+                                series={[
+                                    {
+                                        label: 'Paid',
+                                        color: 'var(--viz-1)',
+                                        values: contributions.map(
+                                            (c) => c.paid,
+                                        ),
+                                    },
+                                ]}
+                                track={contributions.map((c) => c.due)}
+                                trackLabel="Due"
+                            />
+                        </div>
+                        <ChartTable
+                            columns={['Month', 'Due', 'Paid']}
+                            rows={raised.map((c) => ({
+                                key: c.month,
+                                cells: [
+                                    monthLabel(c.month, 'long'),
+                                    formatKes(c.due),
+                                    formatKes(c.paid),
+                                ],
+                            }))}
+                        />
+                    </>
+                ) : (
+                    <EmptyState title="No contributions raised yet" />
+                )}
+            </Section>
+
+            <div className="grid gap-4 *:min-w-0 lg:grid-cols-2">
+                <Section
+                    title="What the money is for"
+                    description={`Held for the group: ${formatKes(fundTotal)}`}
+                >
+                    {funds.length > 0 ? (
+                        <BarList
+                            items={funds.map((f) => ({
+                                key: f.name,
+                                label: f.name,
+                                value: f.balance,
+                            }))}
+                        />
+                    ) : (
+                        <EmptyState title="All funds are empty" />
+                    )}
+                </Section>
+
+                <Section
+                    title="Owing the most"
+                    actions={
+                        arrears.length > 0 && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={onAllArrears}
+                            >
+                                All arrears
+                            </Button>
+                        )
+                    }
+                >
+                    {arrears.length > 0 ? (
+                        <BarList
+                            items={arrears.slice(0, 6).map((a) => ({
+                                key: a.member_id,
+                                label: (
+                                    <Link
+                                        href={`/members/${a.member_id}`}
+                                        className="hover:underline"
+                                    >
+                                        {a.name}
+                                    </Link>
+                                ),
+                                value: a.arrears,
+                            }))}
+                        />
+                    ) : (
+                        <EmptyState title="Nobody is in arrears" />
+                    )}
+                </Section>
+            </div>
+        </div>
     );
 }
 

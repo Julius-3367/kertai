@@ -28,6 +28,7 @@ class ReportController extends Controller
 
         return Inertia::render('reports/index', [
             'filters' => ['from' => $from->toDateString(), 'to' => $to->toDateString(), 'year' => $year],
+            'overview' => $reports->overview(CarbonImmutable::today()),
             'funds' => $reports->fundMovements($from, $to),
             'trial' => $reports->trialBalance($to),
             'grid' => $reports->contributionGrid($year),

@@ -125,6 +125,46 @@ final class Reports
     }
 
     /**
+     * The figures behind the overview charts: twelve months of money in and
+     * out, this year's contributions month by month, and what each fund holds.
+     *
+     * @return array<string, mixed>
+     */
+    public function overview(CarbonImmutable $today): array
+    {
+        $months = collect(range(11, 0))->map(fn (int $i) => $today->startOfMonth()->subMonthsNoOverflow($i)->format('Y-m'));
+        $from = CarbonImmutable::createFromFormat('Y-m-d', $months->first().'-01')->startOfDay();
+        $yearStart = $today->startOfYear();
+
+        $payments = Payment::query()->succeeded()->where('received_at', '>=', $from)->get(['amount', 'received_at']);
+        $payouts = Payout::query()->where('status', 'paid')->where('paid_at', '>=', $from)->get(['amount', 'paid_at']);
+        $in = $payments->groupBy(fn (Payment $p) => $p->received_at->format('Y-m'))->map(fn ($g) => (int) $g->sum('amount'));
+        $out = $payouts->groupBy(fn (Payout $p) => $p->paid_at->format('Y-m'))->map(fn ($g) => (int) $g->sum('amount'));
+
+        $dues = Due::query()->where('type', 'contribution')->where('status', '!=', 'waived')
+            ->where('period', 'like', $today->year.'-%')->get(['period', 'amount', 'paid', 'due_on']);
+        $falling = $dues->filter(fn (Due $d) => $d->due_on->lte($today));
+
+        return [
+            'cashflow' => $months->map(fn (string $m) => ['month' => $m, 'in' => $in[$m] ?? 0, 'out' => $out[$m] ?? 0])->values()->all(),
+            'contributions' => collect(range(1, 12))->map(function (int $m) use ($dues, $today) {
+                $month = $dues->where('period', sprintf('%d-%02d', $today->year, $m));
+
+                return ['month' => sprintf('%d-%02d', $today->year, $m), 'due' => (int) $month->sum('amount'), 'paid' => (int) $month->sum('paid')];
+            })->all(),
+            'funds' => Account::query()->where('kind', '!=', 'asset')->orderBy('code')->get()
+                ->map(fn (Account $a) => ['name' => $a->name, 'balance' => $this->ledger->balance($a)])
+                ->filter(fn (array $f) => $f['balance'] > 0)->sortByDesc('balance')->values()->all(),
+            'totals' => [
+                'collected' => (int) $payments->filter(fn (Payment $p) => $p->received_at->gte($yearStart))->sum('amount'),
+                'paid_out' => (int) $payouts->filter(fn (Payout $p) => $p->paid_at->gte($yearStart))->sum('amount'),
+                'due_so_far' => (int) $falling->sum('amount'),
+                'paid_so_far' => (int) $falling->sum('paid'),
+            ],
+        ];
+    }
+
+    /**
      * The numbers the AGM needs for the year.
      *
      * @return array<string, mixed>

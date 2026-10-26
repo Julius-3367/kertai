@@ -141,3 +141,21 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Report charts. Blue/orange checked for colour-blind separation and 3:1
+   contrast on the white and near-black surfaces; dark steps are separate. */
+.viz {
+    --viz-1: #2a78d6;
+    --viz-2: #eb6834;
+    --viz-track: #cde2fb;
+    --viz-grid: #e1e0d9;
+    --viz-axis: #c3c2b7;
+}
+
+.dark .viz {
+    --viz-1: #3987e5;
+    --viz-2: #d95926;
+    --viz-track: #184f95;
+    --viz-grid: #2c2c2a;
+    --viz-axis: #383835;
+}
