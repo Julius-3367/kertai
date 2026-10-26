@@ -154,6 +154,7 @@ export default function Dashboard({
                                     >
                                         <Input
                                             id="pay-phone"
+                                            inputMode="tel"
                                             value={form.data.phone}
                                             onChange={(e) =>
                                                 form.setData(

@@ -400,6 +400,7 @@ export default function AssetsIndex({
                                                         >
                                                             <Input
                                                                 id="hr-phone"
+                                                                inputMode="tel"
                                                                 value={
                                                                     form.data
                                                                         .hirer_phone

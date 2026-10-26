@@ -347,6 +347,7 @@ export default function ProjectShow(props: Props) {
                                                 >
                                                     <Input
                                                         id="pm-phone"
+                                                        inputMode="tel"
                                                         value={form.data.phone}
                                                         onChange={(e) =>
                                                             form.setData(
@@ -461,6 +462,7 @@ export default function ProjectShow(props: Props) {
                                             >
                                                 <Input
                                                     id="pe-phone"
+                                                    inputMode="tel"
                                                     value={
                                                         form.data.payee_phone
                                                     }
@@ -1255,6 +1257,7 @@ export default function ProjectShow(props: Props) {
                                                             >
                                                                 <Input
                                                                     id="sl-phone"
+                                                                    inputMode="tel"
                                                                     value={
                                                                         form
                                                                             .data

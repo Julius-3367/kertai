@@ -336,6 +336,7 @@ export default function MemberShow({ member, finance, isSelf }: Props) {
                                                 >
                                                     <Input
                                                         id="dep-phone"
+                                                        inputMode="tel"
                                                         value={form.data.phone}
                                                         onChange={(e) =>
                                                             form.setData(

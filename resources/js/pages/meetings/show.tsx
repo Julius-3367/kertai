@@ -32,6 +32,7 @@ import {
     Section,
 } from '@/components/kertai/page';
 import { StatusBadge } from '@/components/kertai/status-badge';
+import { useLeaveGuard } from '@/hooks/use-leave-guard';
 import {
     Num,
     Table,
@@ -387,6 +388,8 @@ function DetailsForm({
         status: meeting.status,
     });
 
+    useLeaveGuard(canManage && form.isDirty);
+
     if (!canManage) {
         return (
             <div className="grid gap-6 lg:grid-cols-2">
@@ -410,7 +413,10 @@ function DetailsForm({
             className="grid gap-6"
             onSubmit={(e) => {
                 e.preventDefault();
-                form.put(`/meetings/${meeting.id}`, { preserveScroll: true });
+                form.put(`/meetings/${meeting.id}`, {
+                    preserveScroll: true,
+                    onSuccess: () => form.setDefaults(),
+                });
             }}
         >
             <ActionError message={actionError(form.errors)} />

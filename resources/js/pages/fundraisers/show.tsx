@@ -381,6 +381,7 @@ export default function FundraiserShow({
                                                     >
                                                         <Input
                                                             id="pl-phone"
+                                                            inputMode="tel"
                                                             value={
                                                                 form.data.phone
                                                             }

@@ -1,5 +1,11 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { CheckCircle2, Loader2, Smartphone, XCircle } from 'lucide-react';
+import {
+    CheckCircle2,
+    Clock,
+    Loader2,
+    Smartphone,
+    XCircle,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { actionError } from '@/components/kertai/actions';
@@ -70,12 +76,27 @@ export default function PublicFundraiser({ fundraiser, contributors }: Props) {
                     { headers: { Accept: 'application/json' } },
                 );
                 const data = (await res.json()) as Status;
+                const stillWaiting = ['pending', 'processing'].includes(
+                    data.status,
+                );
+
+                // About 2.5 minutes with no answer from M-Pesa: stop the
+                // spinner, but warn against paying twice.
+                if (stillWaiting && tries > 40) {
+                    window.clearInterval(timer);
+                    setStatus({
+                        status: 'unconfirmed',
+                        message:
+                            "We haven't had a confirmation from M-Pesa yet. If you entered your PIN and got an M-Pesa message, your gift is recorded and will show here shortly, so don't pay again. If you didn't get the prompt, try again.",
+                        receipt: null,
+                    });
+
+                    return;
+                }
+
                 setStatus(data);
 
-                if (
-                    !['pending', 'processing'].includes(data.status) ||
-                    tries > 40
-                ) {
+                if (!stillWaiting) {
                     window.clearInterval(timer);
 
                     if (data.status === 'succeeded') {
@@ -344,6 +365,7 @@ function PaymentStatus({
 }) {
     const waiting = ['pending', 'processing'].includes(status.status);
     const ok = status.status === 'succeeded';
+    const unconfirmed = status.status === 'unconfirmed';
 
     return (
         <div className="space-y-4 py-4 text-center">
@@ -353,7 +375,10 @@ function PaymentStatus({
             {ok && (
                 <CheckCircle2 className="mx-auto size-10 text-emerald-700" />
             )}
-            {!waiting && !ok && (
+            {unconfirmed && (
+                <Clock className="mx-auto size-10 text-amber-600" />
+            )}
+            {!waiting && !ok && !unconfirmed && (
                 <XCircle className="mx-auto size-10 text-red-600" />
             )}
             <p className="font-medium">{status.message}</p>

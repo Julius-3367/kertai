@@ -11,6 +11,7 @@ import { Page, PageHeader, Section } from '@/components/kertai/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
+import { useLeaveGuard } from '@/hooks/use-leave-guard';
 import { titleCase } from '@/lib/format';
 
 type Settings = {
@@ -82,6 +83,8 @@ export default function RulesEdit({
         resolution_reference: '',
     });
 
+    useLeaveGuard(form.isDirty && !form.processing);
+
     const s = form.data.settings;
     const setS = <K extends keyof Settings>(key: K, value: Settings[K]) =>
         form.setData('settings', { ...form.data.settings, [key]: value });
@@ -109,7 +112,10 @@ export default function RulesEdit({
                     className="grid gap-6"
                     onSubmit={(e) => {
                         e.preventDefault();
-                        form.put('/rules', { preserveScroll: true });
+                        form.put('/rules', {
+                            preserveScroll: true,
+                            onSuccess: () => form.setDefaults(),
+                        });
                     }}
                 >
                     <ActionError message={actionError(form.errors)} />
@@ -153,6 +159,7 @@ export default function RulesEdit({
                             <Field label="Phone" htmlFor="g-phone">
                                 <Input
                                     id="g-phone"
+                                    inputMode="tel"
                                     value={form.data.group.phone}
                                     onChange={(e) =>
                                         setG('phone', e.target.value)

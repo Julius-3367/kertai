@@ -331,6 +331,7 @@ export default function PaymentsIndex({
                                             >
                                                 <Input
                                                     id="stk-phone"
+                                                    inputMode="tel"
                                                     placeholder="0712 345 678"
                                                     value={form.data.phone}
                                                     onChange={(e) =>

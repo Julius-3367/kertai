@@ -84,7 +84,7 @@ export function FormDialog<TForm extends FormDataType<TForm>>({
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent
                 className={cn(
-                    'max-h-[90vh] overflow-y-auto',
+                    'max-h-[85dvh] overflow-y-auto',
                     wide && 'sm:max-w-2xl',
                 )}
                 {...(description ? {} : { 'aria-describedby': undefined })}

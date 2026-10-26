@@ -119,7 +119,7 @@ export function StatCard({
             </div>
             <div
                 className={cn(
-                    'mt-1 truncate text-lg font-semibold tabular-nums sm:text-xl',
+                    'mt-1 text-base font-semibold break-words tabular-nums sm:text-xl',
                     tones[tone],
                 )}
             >

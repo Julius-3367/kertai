@@ -27,7 +27,7 @@ export function Pagination<T>({ page }: { page: Paginated<T> }) {
                             href={link.url}
                             preserveScroll
                             className={cn(
-                                'min-w-8 rounded-md border px-2 py-1 text-center',
+                                'flex min-h-10 min-w-10 items-center justify-center rounded-md border px-2 sm:min-h-8 sm:min-w-8',
                                 link.active
                                     ? 'border-primary bg-primary text-primary-foreground'
                                     : 'hover:bg-accent',
@@ -38,7 +38,7 @@ export function Pagination<T>({ page }: { page: Paginated<T> }) {
                     ) : (
                         <span
                             key={i}
-                            className="min-w-8 rounded-md border px-2 py-1 text-center text-muted-foreground opacity-50"
+                            className="flex min-h-10 min-w-10 items-center justify-center rounded-md border px-2 text-muted-foreground opacity-50 sm:min-h-8 sm:min-w-8"
                         >
                             {label}
                         </span>

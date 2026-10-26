@@ -12,6 +12,7 @@ import { Page, PageHeader, Section } from '@/components/kertai/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
+import { useLeaveGuard } from '@/hooks/use-leave-guard';
 import { today } from '@/lib/format';
 
 type MemberData = {
@@ -58,6 +59,8 @@ export default function MemberForm({ member }: { member: MemberData | null }) {
         locale: member?.locale ?? 'en',
         notes: member?.notes ?? '',
     });
+
+    useLeaveGuard(form.isDirty && !form.processing);
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
@@ -206,7 +209,9 @@ export default function MemberForm({ member }: { member: MemberData | null }) {
                     >
                         <div className="grid gap-4 sm:grid-cols-2">
                             {text('nominee_name', 'Nominee name')}
-                            {text('nominee_phone', 'Nominee phone')}
+                            {text('nominee_phone', 'Nominee phone', {
+                                inputMode: 'tel',
+                            })}
                             {text('nominee_relationship', 'Relationship')}
                             {text('nominee_id_number', 'Nominee ID number')}
                         </div>

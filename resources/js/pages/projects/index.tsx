@@ -224,7 +224,7 @@ export default function ProjectsIndex({
                                     </div>
                                     <StatusBadge status={p.status} />
                                 </div>
-                                <dl className="grid grid-cols-4 gap-2 text-sm">
+                                <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                                     <div>
                                         <dt className="text-xs text-muted-foreground">
                                             Put in

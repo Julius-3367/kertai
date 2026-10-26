@@ -68,6 +68,7 @@ export default function PayoutsIndex({
 }) {
     const can = useCan();
     const [selected, setSelected] = useState<number[]>([]);
+    const [approving, setApproving] = useState(false);
     const decidable = payouts.data.filter((p) => p.can_decide);
 
     return (
@@ -228,6 +229,7 @@ export default function PayoutsIndex({
                                         >
                                             <Input
                                                 id="po-phone"
+                                                inputMode="tel"
                                                 value={form.data.payee_phone}
                                                 onChange={(e) =>
                                                     form.setData(
@@ -279,9 +281,12 @@ export default function PayoutsIndex({
                                 </span>
                                 <Button
                                     size="sm"
-                                    disabled={selected.length === 0}
+                                    disabled={
+                                        selected.length === 0 || approving
+                                    }
                                     onClick={() => {
                                         if (
+                                            !approving &&
                                             window.confirm(
                                                 `Approve ${selected.length} payouts?`,
                                             )
@@ -291,6 +296,10 @@ export default function PayoutsIndex({
                                                 { ids: selected },
                                                 {
                                                     preserveScroll: true,
+                                                    onStart: () =>
+                                                        setApproving(true),
+                                                    onFinish: () =>
+                                                        setApproving(false),
                                                     onSuccess: () =>
                                                         setSelected([]),
                                                 },
@@ -298,7 +307,10 @@ export default function PayoutsIndex({
                                         }
                                     }}
                                 >
-                                    <CheckCheck /> Approve selected
+                                    <CheckCheck />{' '}
+                                    {approving
+                                        ? 'Approving…'
+                                        : 'Approve selected'}
                                 </Button>
                             </div>
                         )}
