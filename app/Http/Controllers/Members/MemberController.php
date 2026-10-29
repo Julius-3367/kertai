@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Members;
 
 use App\Domain\Access\Permission;
 use App\Domain\Dues\Models\Due;
+use App\Domain\Members\Actions\DeleteMember;
 use App\Domain\Members\Actions\MemberExit;
 use App\Domain\Members\Actions\SaveMember;
 use App\Domain\Members\MemberFinance;
@@ -76,7 +77,7 @@ class MemberController extends Controller
         return to_route('members.show', $member);
     }
 
-    public function show(Request $request, Member $member, MemberFinance $finance, MemberExit $exit): Response
+    public function show(Request $request, Member $member, MemberFinance $finance, MemberExit $exit, DeleteMember $delete): Response
     {
         $user = $request->user();
         $isSelf = $user->member?->id === $member->id;
@@ -131,6 +132,7 @@ class MemberController extends Controller
             'changeRequest' => $this->pendingChange($member),
             'changeFields' => MemberChangeRequest::FIELDS,
             'canDecideChanges' => ! $isSelf && $user->hasPermission(Permission::MembersManage->value),
+            'deleteBlockers' => $user->hasPermission(Permission::MembersManage->value) && ! $isSelf ? $delete->blockers($member) : null,
         ]);
     }
 
@@ -156,6 +158,15 @@ class MemberController extends Controller
                 'to' => $show($field, $new),
             ])->values(),
         ];
+    }
+
+    public function destroy(Request $request, Member $member, DeleteMember $delete): RedirectResponse
+    {
+        $name = "{$member->member_number} {$member->name}";
+        $delete->handle($member, $request->user());
+        $this->toast("{$name} deleted. The next new member gets the next free number.");
+
+        return to_route('members.index');
     }
 
     public function edit(Member $member): Response

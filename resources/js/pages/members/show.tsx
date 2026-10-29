@@ -115,6 +115,8 @@ type Props = {
     changeRequest: PendingChange | null;
     changeFields: Record<string, string>;
     canDecideChanges: boolean;
+    /** Null when the viewer cannot delete; empty when nothing blocks it. */
+    deleteBlockers: string[] | null;
 };
 
 export default function MemberShow({
@@ -124,6 +126,7 @@ export default function MemberShow({
     changeRequest,
     changeFields,
     canDecideChanges,
+    deleteBlockers,
 }: Props) {
     const can = useCan();
     const [tab, setTab] = useState<'profile' | 'money' | 'actions'>(
@@ -587,6 +590,30 @@ export default function MemberShow({
 
                 {tab === 'actions' && (
                     <div className="grid gap-4 md:grid-cols-2">
+                        {deleteBlockers !== null && (
+                            <Section
+                                title="Delete this record"
+                                description="For members added by mistake or for testing. The record, login and positions are removed for good, and the next new member gets the next free number."
+                            >
+                                {deleteBlockers.length === 0 ? (
+                                    <ActionButton
+                                        url={`/members/${member.id}`}
+                                        method="delete"
+                                        variant="destructive"
+                                        confirm={`Delete ${member.member_number} ${member.name} completely? This cannot be undone.`}
+                                    >
+                                        <Trash2 /> Delete member
+                                    </ActionButton>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">
+                                        Cannot be deleted: this member has{' '}
+                                        {deleteBlockers.join(', ')}. Use
+                                        &quot;Leaving the group&quot; instead,
+                                        so the books keep the history.
+                                    </p>
+                                )}
+                            </Section>
+                        )}
                         {manage && active && (
                             <Section
                                 title="Login"

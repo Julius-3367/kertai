@@ -112,6 +112,7 @@ Route::middleware(['auth', 'member'])->group(function () {
         Route::post('members', [MemberController::class, 'store'])->name('members.store');
         Route::get('members/{member}/edit', [MemberController::class, 'edit'])->name('members.edit');
         Route::put('members/{member}', [MemberController::class, 'update'])->name('members.update');
+        Route::delete('members/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
         Route::post('members/{member}/login', [MemberLifecycleController::class, 'issueLogin'])->name('members.login');
         Route::post('members/{member}/dependants', [MemberController::class, 'storeDependant'])->name('members.dependants.store');
         Route::delete('members/{member}/dependants/{dependant}', [MemberController::class, 'destroyDependant'])->name('members.dependants.destroy');

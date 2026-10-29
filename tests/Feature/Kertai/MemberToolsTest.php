@@ -10,6 +10,43 @@ use App\Domain\Notifications\Notifier;
 use App\Domain\Votes\Models\Poll;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+
+// Deleting
+
+it('deletes a member added for testing, with their login and positions, and reuses the number', function () {
+    $secretary = $this->official('secretary', ['member_number' => 'M001']);
+    $test = $this->member(['member_number' => 'M002', 'name' => 'Testing Member'], 'treasurer');
+    $userId = $test->user_id;
+
+    $this->actingAs($secretary)->get("/members/{$test->id}")->assertInertia(fn ($p) => $p->where('deleteBlockers', []));
+    $this->actingAs($test->user)->delete("/members/{$test->id}")->assertForbidden();
+
+    $this->actingAs($secretary)->delete("/members/{$test->id}")->assertRedirect('/members');
+
+    expect(Member::query()->find($test->id))->toBeNull()
+        ->and(User::query()->find($userId))->toBeNull()
+        ->and(DB::table('position_terms')->where('member_id', $test->id)->exists())->toBeFalse();
+
+    $this->actingAs($secretary)->post('/members', ['name' => 'Real Person', 'phone' => '0799000222', 'joined_on' => '2026-10-29', 'locale' => 'en']);
+    expect(Member::query()->where('name', 'Real Person')->value('member_number'))->toBe('M002');
+});
+
+it('keeps anyone with money history, and never deletes your own record', function () {
+    $secretary = $this->official('secretary');
+    $member = $this->member();
+
+    DB::table('payments')->insert([
+        'group_id' => $member->group_id, 'member_id' => $member->id, 'channel' => 'cash', 'status' => 'allocated',
+        'purpose' => 'contribution', 'amount' => 100000, 'created_at' => now(), 'updated_at' => now(),
+    ]);
+
+    $this->actingAs($secretary)->get("/members/{$member->id}")->assertInertia(fn ($p) => $p->where('deleteBlockers', ['payments']));
+    $this->actingAs($secretary)->delete("/members/{$member->id}")->assertSessionHasErrors('action');
+    $this->actingAs($secretary)->delete("/members/{$secretary->member->id}")->assertSessionHasErrors('action');
+
+    expect(Member::query()->find($member->id))->not->toBeNull();
+});
 
 // View as
 
