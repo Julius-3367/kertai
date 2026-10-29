@@ -13,6 +13,7 @@ use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -59,5 +60,38 @@ return Application::configure(basePath: dirname(__DIR__))
             Inertia::flash('toast', ['type' => 'error', 'message' => $e->getMessage()]);
 
             return back()->withErrors(['action' => $e->getMessage()])->withInput();
+        });
+
+        // Show errors inside the app instead of Laravel's bare error page,
+        // which Inertia would pop up in a modal. Crash pages stay as they
+        // are while debugging.
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
+            $status = $response->getStatusCode();
+
+            if ($request->expectsJson() || $request->is('api/*') || $request->is('webhooks/*')) {
+                return $response;
+            }
+
+            if ($status === 419) {
+                Inertia::flash('toast', ['type' => 'error', 'message' => 'The page had expired. Please try again.']);
+
+                return back();
+            }
+
+            $crash = in_array($status, [500, 503], true) && ! app()->hasDebugModeEnabled();
+
+            if (! in_array($status, [403, 404], true) && ! $crash) {
+                return $response;
+            }
+
+            // Keep a specific reason (e.g. a login not linked to a member),
+            // drop the framework's generic wording.
+            $message = $status === 403 && ! in_array($e->getMessage(), ['', 'This action is unauthorized.', 'Forbidden'], true)
+                ? $e->getMessage()
+                : null;
+
+            return Inertia::render('error', ['status' => $status, 'message' => $message])
+                ->toResponse($request)
+                ->setStatusCode($status);
         });
     })->create();
