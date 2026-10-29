@@ -19,13 +19,17 @@ use App\Http\Controllers\Finance\PayoutController;
 use App\Http\Controllers\Finance\ReportController;
 use App\Http\Controllers\Finance\ShareOutController;
 use App\Http\Controllers\Finance\StatementImportController;
+use App\Http\Controllers\InboxController;
+use App\Http\Controllers\Members\ChangeRequestController;
 use App\Http\Controllers\Members\MemberController;
+use App\Http\Controllers\Members\MemberImportController;
 use App\Http\Controllers\Members\MemberLifecycleController;
 use App\Http\Controllers\Members\PositionController;
 use App\Http\Controllers\Programmes\AssetController;
 use App\Http\Controllers\Programmes\FundraiserController;
 use App\Http\Controllers\Programmes\MeetingController;
 use App\Http\Controllers\Programmes\MgrController;
+use App\Http\Controllers\Programmes\PollController;
 use App\Http\Controllers\Programmes\ProjectController;
 use App\Http\Controllers\Programmes\WelfareController;
 use App\Http\Controllers\PublicFundraiserController;
@@ -83,9 +87,27 @@ Route::middleware(['auth', 'member'])->group(function () {
     Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
+    Route::get('inbox', [InboxController::class, 'index'])->name('inbox.index');
+    Route::post('inbox/read-all', [InboxController::class, 'readAll'])->name('inbox.read-all');
+    Route::post('inbox/{item}/open', [InboxController::class, 'open'])->name('inbox.open');
+    Route::get('votes', [PollController::class, 'index'])->name('votes.index');
+    Route::get('votes/{poll}', [PollController::class, 'show'])->name('votes.show')->whereNumber('poll');
+    Route::post('votes/{poll}/vote', [PollController::class, 'vote'])->name('votes.vote');
+    Route::post('me/changes', [ChangeRequestController::class, 'store'])->name('changes.store');
+    Route::post('me/changes/{change}/withdraw', [ChangeRequestController::class, 'withdraw'])->name('changes.withdraw');
+    Route::post('view-as/stop', [PositionController::class, 'stopViewAs'])->name('view-as.stop');
+
+    Route::middleware('can:'.P::MeetingsManage->value)->group(function () {
+        Route::post('votes', [PollController::class, 'store'])->name('votes.store');
+        Route::post('votes/{poll}/close', [PollController::class, 'close'])->name('votes.close');
+    });
 
     // Member register
     Route::middleware('can:'.P::MembersManage->value)->group(function () {
+        Route::get('members/import', [MemberImportController::class, 'create'])->name('members.import');
+        Route::get('members/import/template', [MemberImportController::class, 'template'])->name('members.import.template');
+        Route::post('members/import', [MemberImportController::class, 'store'])->name('members.import.store');
+        Route::post('member-changes/{change}/decide', [ChangeRequestController::class, 'decide'])->name('changes.decide');
         Route::get('members/create', [MemberController::class, 'create'])->name('members.create');
         Route::post('members', [MemberController::class, 'store'])->name('members.store');
         Route::get('members/{member}/edit', [MemberController::class, 'edit'])->name('members.edit');
@@ -104,6 +126,8 @@ Route::middleware(['auth', 'member'])->group(function () {
 
     Route::middleware('can:'.P::PositionsManage->value)->group(function () {
         Route::get('positions', [PositionController::class, 'index'])->name('positions.index');
+        Route::post('positions/{position}/view-as', [PositionController::class, 'viewAs'])->name('positions.view-as');
+        Route::post('view-as/member', [PositionController::class, 'viewAsMember'])->name('view-as.member');
         Route::post('positions', [PositionController::class, 'store'])->name('positions.store');
         Route::put('positions/{position}', [PositionController::class, 'update'])->name('positions.update');
         Route::delete('positions/{position}', [PositionController::class, 'destroy'])->name('positions.destroy');

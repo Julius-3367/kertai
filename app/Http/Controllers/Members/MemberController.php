@@ -9,6 +9,7 @@ use App\Domain\Members\Actions\SaveMember;
 use App\Domain\Members\MemberFinance;
 use App\Domain\Members\Models\Dependant;
 use App\Domain\Members\Models\Member;
+use App\Domain\Members\Models\MemberChangeRequest;
 use App\Domain\Payments\Models\Payment;
 use App\Http\Controllers\Controller;
 use App\Support\Phone;
@@ -51,6 +52,14 @@ class MemberController extends Controller
             'members' => $members,
             'filters' => $request->only('q', 'status'),
             'showMoney' => $showMoney,
+            'pendingChanges' => $request->user()->hasPermission(Permission::MembersManage->value)
+                ? MemberChangeRequest::query()->with('member')->where('status', 'pending')->oldest()->get()->map(fn (MemberChangeRequest $c) => [
+                    'member_id' => $c->member_id,
+                    'name' => $c->member->name,
+                    'fields' => implode(', ', array_map(fn ($f) => MemberChangeRequest::FIELDS[$f] ?? $f, array_keys($c->changes))),
+                    'at' => $c->created_at->toIso8601String(),
+                ])
+                : [],
         ]);
     }
 
@@ -119,7 +128,34 @@ class MemberController extends Controller
                 ]),
             ] : null,
             'isSelf' => $isSelf,
+            'changeRequest' => $this->pendingChange($member),
+            'changeFields' => MemberChangeRequest::FIELDS,
+            'canDecideChanges' => ! $isSelf && $user->hasPermission(Permission::MembersManage->value),
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function pendingChange(Member $member): ?array
+    {
+        $change = MemberChangeRequest::query()->where('member_id', $member->id)->where('status', 'pending')->latest('id')->first();
+
+        if ($change === null) {
+            return null;
+        }
+
+        $show = fn (string $field, ?string $value) => $value !== null && str_ends_with($field, 'phone') ? Phone::display($value) : $value;
+
+        return [
+            'id' => $change->id,
+            'at' => $change->created_at->toIso8601String(),
+            'rows' => collect($change->changes)->map(fn ($new, $field) => [
+                'field' => MemberChangeRequest::FIELDS[$field] ?? $field,
+                'from' => $show($field, $change->previous[$field] ?? null),
+                'to' => $show($field, $new),
+            ])->values(),
+        ];
     }
 
     public function edit(Member $member): Response

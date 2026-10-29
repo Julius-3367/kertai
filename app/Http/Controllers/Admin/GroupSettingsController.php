@@ -74,6 +74,7 @@ class GroupSettingsController extends Controller
             'settings.members_see_group_finances' => ['boolean'],
             'settings.payer_pays_mpesa_fees' => ['boolean'],
             'settings.sms_costs_from_group_fund' => ['boolean'],
+            'settings.birthday_greetings' => ['sometimes', 'boolean'],
             'settings.project_profit_basis' => ['required', Rule::in(['contribution', 'equal'])],
             'settings.share_out_month' => ['required', 'integer', 'min:1', 'max:12'],
             'settings.sms_sender_id' => ['required', 'string', 'max:11'],

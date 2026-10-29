@@ -2,9 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Access\ViewAs;
 use App\Domain\Groups\CurrentGroup;
 use App\Domain\Loans\Models\Loan;
 use App\Domain\Loans\Models\LoanGuarantor;
+use App\Domain\Notifications\Models\InboxItem;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -66,6 +68,8 @@ class HandleInertiaRequests extends Middleware
                         || LoanGuarantor::query()->where('member_id', $member->id)->exists(),
                 ] : null,
                 'permissions' => $user?->permissions() ?? [],
+                'viewing_as' => $user ? ViewAs::label() : null,
+                'unread' => $user ? InboxItem::query()->where('user_id', $user->id)->whereNull('read_at')->count() : 0,
             ],
             'group' => $group ? [
                 'name' => $group->name,

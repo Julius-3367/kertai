@@ -6,6 +6,7 @@ use App\Domain\Groups\Models\Group;
 use App\Domain\Members\MemberFinance;
 use App\Domain\Members\Models\Member;
 use App\Domain\Notifications\Jobs\SendOutboundMessage;
+use App\Domain\Notifications\Models\InboxItem;
 use App\Domain\Notifications\Models\MessageTemplate;
 use App\Domain\Notifications\Models\OutboundMessage;
 use App\Support\Money;
@@ -32,7 +33,10 @@ final class Notifier
         }
 
         $group = Group::find($member->group_id);
-        $data = $this->baseData($group, $member) + $data;
+        // The caller's values win, so a specific link (a loan, a vote)
+        // replaces the plain site address.
+        $data = [...$this->baseData($group, $member), ...$data];
+        $this->toInbox($group, $member, $key, $data);
         $sent = [];
 
         foreach ($channels ?? ['sms', 'email'] as $channel) {
@@ -95,6 +99,16 @@ final class Notifier
 
         $group = Group::find($member->group_id);
         $data = $this->baseData($group, $member, withBalances: true);
+
+        // A broadcast usually goes by SMS and email; file it once.
+        if ($member->user_id !== null && ($channel === 'sms' || $this->recipient($member, 'sms', ignorePreference: true) === null)) {
+            InboxItem::withoutGlobalScopes()->create([
+                'group_id' => $group->id,
+                'user_id' => $member->user_id,
+                'title' => $subject ? $this->render($subject, $data) : "Message from {$group->name}",
+                'body' => $this->render($body, $data),
+            ]);
+        }
 
         return $this->queue(
             $group,
@@ -230,6 +244,52 @@ final class Notifier
         }
 
         return $data;
+    }
+
+    /**
+     * Files the message under the member's bell, whatever their SMS and
+     * email choices, so nothing is missed and it costs nothing.
+     *
+     * @param  array<string, string|int|null>  $data
+     */
+    private function toInbox(Group $group, Member $member, string $key, array $data): void
+    {
+        // Login details carry a password; they stay in SMS and email only.
+        if ($member->user_id === null || $key === 'account_created') {
+            return;
+        }
+
+        $template = $this->template($group, $key, 'sms', $member->locale) ?? $this->template($group, $key, 'email', $member->locale);
+
+        if ($template === null) {
+            return;
+        }
+
+        $base = rtrim((string) config('app.url'), '/');
+        $link = (string) ($data['link'] ?? '');
+        $url = $link !== '' && $link !== $base
+            ? (str_starts_with($link, $base) ? substr($link, strlen($base)) : $link)
+            : $this->inboxLink($key, $member);
+
+        InboxItem::withoutGlobalScopes()->create([
+            'group_id' => $group->id,
+            'user_id' => $member->user_id,
+            'title' => $this->render($template['subject'], $data) ?: (DefaultTemplates::all()[$key]['label'] ?? $group->name),
+            'body' => $this->render($template['body'], $data),
+            'url' => $url,
+        ]);
+    }
+
+    private function inboxLink(string $key, Member $member): ?string
+    {
+        return match (true) {
+            in_array($key, ['payment_received', 'fine_applied', 'contribution_reminder', 'arrears_reminder'], true) => "/statements/{$member->id}",
+            str_starts_with($key, 'loan_') || str_starts_with($key, 'guarantor_') => '/me/loans',
+            str_starts_with($key, 'meeting_') => '/meetings',
+            str_starts_with($key, 'mgr_') => '/mgr',
+            str_starts_with($key, 'change_request_') => "/members/{$member->id}",
+            default => null,
+        };
     }
 
     private function recipient(Member $member, string $channel, bool $ignorePreference = false): ?string

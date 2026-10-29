@@ -10,7 +10,7 @@ namespace App\Domain\Notifications;
 final class DefaultTemplates
 {
     /** Keys a member can switch off with "reminders off". Everything else always goes. */
-    public const REMINDERS = ['contribution_reminder', 'arrears_reminder', 'loan_reminder', 'meeting_notice', 'meeting_reminder', 'mgr_turn'];
+    public const REMINDERS = ['contribution_reminder', 'arrears_reminder', 'loan_reminder', 'meeting_notice', 'meeting_reminder', 'mgr_turn', 'birthday'];
 
     /**
      * @return array<string, array{label: string, subject: string, en: string, sw: string}>
@@ -119,6 +119,30 @@ final class DefaultTemplates
                 'subject' => 'Due {date}: {title}',
                 'en' => 'Reminder: {title} is due on {date}. {group}',
                 'sw' => 'Kumbusho: {title} inahitajika tarehe {date}. {group}',
+            ],
+            'poll_opened' => [
+                'label' => 'New vote',
+                'subject' => 'Vote: {question}',
+                'en' => 'Dear {name}, please vote on "{question}" by {closes}. Open {link} to vote. {group}',
+                'sw' => 'Mpendwa {name}, tafadhali piga kura kuhusu "{question}" kabla ya {closes}. Fungua {link} kupiga kura. {group}',
+            ],
+            'birthday' => [
+                'label' => 'Birthday greeting',
+                'subject' => 'Happy birthday, {name}',
+                'en' => 'Happy birthday {name}! Wishing you good health and a blessed year ahead. From all of us at {group}.',
+                'sw' => 'Heri ya siku ya kuzaliwa {name}! Tunakutakia afya njema na mwaka wenye baraka. Kutoka kwetu sote {group}.',
+            ],
+            'change_request_new' => [
+                'label' => 'Member asked to change details',
+                'subject' => '{member} asked to change their details',
+                'en' => 'Dear {name}, {member} has asked to change: {fields}. Open {link} to approve or reject. {group}',
+                'sw' => 'Mpendwa {name}, {member} ameomba kubadilisha: {fields}. Fungua {link} kukubali au kukataa. {group}',
+            ],
+            'change_request_decided' => [
+                'label' => 'Details change answered',
+                'subject' => 'Your details change was {decision}',
+                'en' => 'Dear {name}, your request to change {fields} was {decision}. {reason} {group}',
+                'sw' => 'Mpendwa {name}, ombi lako la kubadilisha {fields} lime{decision_sw}. {reason} {group}',
             ],
         ];
     }

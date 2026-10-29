@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Access\ViewAs;
 use App\Domain\Groups\Models\Group;
 use App\Domain\Members\Models\Member;
 use Database\Factories\UserFactory;
@@ -69,10 +70,23 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasOne(Member::class);
     }
 
-    /** @return array<int, string> */
+    /**
+     * What this user may do right now: their positions' access, or the
+     * previewed position's while they use "View as".
+     *
+     * @return array<int, string>
+     */
     public function permissions(): array
     {
-        return $this->member?->permissions() ?? [];
+        $real = $this->realPermissions();
+
+        return ViewAs::permissionsFor($this, $real) ?? $real;
+    }
+
+    /** @return list<string> */
+    public function realPermissions(): array
+    {
+        return array_values($this->member?->permissions() ?? []);
     }
 
     public function hasPermission(string $permission): bool

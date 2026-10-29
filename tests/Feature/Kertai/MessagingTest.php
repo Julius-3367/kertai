@@ -46,7 +46,7 @@ it('uses a template the group has customised, and can reset it', function () {
     $this->actingAs($secretary)->put('/messages/templates', ['key' => 'meeting_notice', 'channel' => 'sms', 'locale' => 'en', 'body' => 'x', 'reset' => true]);
     expect(MessageTemplate::query()->count())->toBe(0);
 
-    $this->actingAs($secretary)->get('/messages/templates')->assertOk()->assertInertia(fn ($p) => $p->has('templates', 17 * 4));
+    $this->actingAs($secretary)->get('/messages/templates')->assertOk()->assertInertia(fn ($p) => $p->has('templates', 21 * 4));
 });
 
 it('sends a message to members in arrears with their own balance filled in', function () {

@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Copy, Trash2, UserPlus } from 'lucide-react';
+import { Copy, Eye, Trash2, UserPlus } from 'lucide-react';
 import {
     ActionButton,
     FormDialog,
@@ -69,97 +69,105 @@ export default function PositionsIndex({
                     title="Positions and terms"
                     description="Each position is a bundle of permissions held for a term. Create vice positions by copying an existing one."
                     actions={
-                        <FormDialog
-                            title="New position"
-                            description="Starts with the same access as the position you copy. Adjust it afterwards."
-                            action="/positions"
-                            submitLabel="Create"
-                            initial={{
-                                name: '',
-                                copy_from: String(positions[0]?.id ?? ''),
-                                description: '',
-                                max_holders: '1',
-                            }}
-                            trigger={
-                                <Button>
-                                    <Copy /> New position
-                                </Button>
-                            }
-                        >
-                            {(form) => (
-                                <>
-                                    <Field
-                                        label="Name"
-                                        htmlFor="pos-name"
-                                        error={form.errors.name}
-                                    >
-                                        <Input
-                                            id="pos-name"
-                                            placeholder="Vice chairperson"
-                                            value={form.data.name}
-                                            onChange={(e) =>
-                                                form.setData(
-                                                    'name',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
-                                        label="Copy access from"
-                                        htmlFor="pos-copy"
-                                        error={form.errors.copy_from}
-                                    >
-                                        <Select
-                                            id="pos-copy"
-                                            value={form.data.copy_from}
-                                            onChange={(e) =>
-                                                form.setData(
-                                                    'copy_from',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            options={positions.map((p) => ({
-                                                value: p.id,
-                                                label: p.name,
-                                            }))}
-                                        />
-                                    </Field>
-                                    <Field
-                                        label="Description"
-                                        htmlFor="pos-desc"
-                                    >
-                                        <Input
-                                            id="pos-desc"
-                                            value={form.data.description}
-                                            onChange={(e) =>
-                                                form.setData(
-                                                    'description',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
-                                        label="Most people who can hold it at once"
-                                        htmlFor="pos-max"
-                                        hint="Leave empty for no limit."
-                                    >
-                                        <Input
-                                            id="pos-max"
-                                            inputMode="numeric"
-                                            value={form.data.max_holders}
-                                            onChange={(e) =>
-                                                form.setData(
-                                                    'max_holders',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                    </Field>
-                                </>
-                            )}
-                        </FormDialog>
+                        <>
+                            <ActionButton
+                                url="/view-as/member"
+                                variant="outline"
+                            >
+                                <Eye /> View as a member
+                            </ActionButton>
+                            <FormDialog
+                                title="New position"
+                                description="Starts with the same access as the position you copy. Adjust it afterwards."
+                                action="/positions"
+                                submitLabel="Create"
+                                initial={{
+                                    name: '',
+                                    copy_from: String(positions[0]?.id ?? ''),
+                                    description: '',
+                                    max_holders: '1',
+                                }}
+                                trigger={
+                                    <Button>
+                                        <Copy /> New position
+                                    </Button>
+                                }
+                            >
+                                {(form) => (
+                                    <>
+                                        <Field
+                                            label="Name"
+                                            htmlFor="pos-name"
+                                            error={form.errors.name}
+                                        >
+                                            <Input
+                                                id="pos-name"
+                                                placeholder="Vice chairperson"
+                                                value={form.data.name}
+                                                onChange={(e) =>
+                                                    form.setData(
+                                                        'name',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </Field>
+                                        <Field
+                                            label="Copy access from"
+                                            htmlFor="pos-copy"
+                                            error={form.errors.copy_from}
+                                        >
+                                            <Select
+                                                id="pos-copy"
+                                                value={form.data.copy_from}
+                                                onChange={(e) =>
+                                                    form.setData(
+                                                        'copy_from',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                options={positions.map((p) => ({
+                                                    value: p.id,
+                                                    label: p.name,
+                                                }))}
+                                            />
+                                        </Field>
+                                        <Field
+                                            label="Description"
+                                            htmlFor="pos-desc"
+                                        >
+                                            <Input
+                                                id="pos-desc"
+                                                value={form.data.description}
+                                                onChange={(e) =>
+                                                    form.setData(
+                                                        'description',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </Field>
+                                        <Field
+                                            label="Most people who can hold it at once"
+                                            htmlFor="pos-max"
+                                            hint="Leave empty for no limit."
+                                        >
+                                            <Input
+                                                id="pos-max"
+                                                inputMode="numeric"
+                                                value={form.data.max_holders}
+                                                onChange={(e) =>
+                                                    form.setData(
+                                                        'max_holders',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </Field>
+                                    </>
+                                )}
+                            </FormDialog>
+                        </>
                     }
                 />
 
@@ -245,6 +253,13 @@ function PositionCard({
             description={position.description ?? undefined}
             actions={
                 <>
+                    <ActionButton
+                        url={`/positions/${position.id}/view-as`}
+                        size="sm"
+                        variant="outline"
+                    >
+                        <Eye /> View as
+                    </ActionButton>
                     <FormDialog
                         title={`Appoint ${position.name}`}
                         description="Acting appointments need an end date and lapse on their own."

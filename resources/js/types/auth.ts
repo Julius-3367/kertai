@@ -24,6 +24,9 @@ export type Auth = {
     user: User;
     member: AuthMember | null;
     permissions: string[];
+    /** The position being previewed with "View as", if any. */
+    viewing_as: string | null;
+    unread: number;
 };
 
 export type SharedGroup = {

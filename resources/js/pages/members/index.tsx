@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { Select } from '@/components/kertai/fields';
 import {
@@ -41,10 +41,17 @@ export default function MembersIndex({
     members,
     filters,
     showMoney,
+    pendingChanges,
 }: {
     members: Row[];
     filters: { q?: string; status?: string };
     showMoney: boolean;
+    pendingChanges: {
+        member_id: number;
+        name: string;
+        fields: string;
+        at: string;
+    }[];
 }) {
     const can = useCan();
     const [q, setQ] = useState(filters.q ?? '');
@@ -65,14 +72,50 @@ export default function MembersIndex({
                     description={`${members.length} on the register`}
                     actions={
                         can('members.manage') && (
-                            <Button asChild>
-                                <Link href="/members/create">
-                                    <Plus /> Add member
-                                </Link>
-                            </Button>
+                            <>
+                                <Button variant="outline" asChild>
+                                    <Link href="/members/import">
+                                        <Upload /> Import
+                                    </Link>
+                                </Button>
+                                <Button asChild>
+                                    <Link href="/members/create">
+                                        <Plus /> Add member
+                                    </Link>
+                                </Button>
+                            </>
                         )
                     }
                 />
+                {pendingChanges.length > 0 && (
+                    <Section
+                        title="Details waiting for approval"
+                        description="Members asked to change their own details. Open each member to approve or reject."
+                    >
+                        <ul className="-my-2 divide-y">
+                            {pendingChanges.map((c) => (
+                                <li key={c.member_id}>
+                                    <Link
+                                        href={`/members/${c.member_id}`}
+                                        className="flex flex-wrap justify-between gap-2 py-2 text-sm hover:bg-muted/40"
+                                    >
+                                        <span>
+                                            <span className="font-medium">
+                                                {c.name}
+                                            </span>{' '}
+                                            <span className="text-muted-foreground">
+                                                {c.fields}
+                                            </span>
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {formatDate(c.at)}
+                                        </span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </Section>
+                )}
                 <Section>
                     <form
                         className="mb-4 flex flex-col gap-2 sm:flex-row"

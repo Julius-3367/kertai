@@ -43,6 +43,7 @@ type Settings = {
     loan_block_if_arrears: boolean;
     payer_pays_mpesa_fees: boolean;
     sms_costs_from_group_fund: boolean;
+    birthday_greetings: boolean;
     project_profit_basis: string;
     share_out_month: number;
     sms_sender_id: string;
@@ -537,6 +538,13 @@ export default function RulesEdit({
                                 onChange={(v) =>
                                     setS('sms_costs_from_group_fund', v)
                                 }
+                            />
+                            <CheckField
+                                id="s-birthday"
+                                label="Send members a birthday SMS"
+                                hint="Goes to members whose date of birth is on the register. Members who switch reminders off do not get it."
+                                checked={s.birthday_greetings}
+                                onChange={(v) => setS('birthday_greetings', v)}
                             />
                         </div>
                     </Section>

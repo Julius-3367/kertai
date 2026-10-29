@@ -23,6 +23,7 @@ import {
     Sprout,
     Tent,
     Users,
+    Vote,
     Wallet,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -49,6 +50,7 @@ const sections: { label: string; items: Entry[] }[] = [
             { title: 'Merry-go-round', href: '/mgr', icon: RefreshCw },
             { title: 'Fundraisers', href: '/fundraisers', icon: Megaphone },
             { title: 'Meetings', href: '/meetings', icon: CalendarDays },
+            { title: 'Votes', href: '/votes', icon: Vote },
             { title: 'Documents', href: '/documents', icon: FileText },
         ],
     },

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Members;
 use App\Domain\Access\Models\Position;
 use App\Domain\Access\Models\PositionTerm;
 use App\Domain\Access\Permission;
+use App\Domain\Access\ViewAs;
 use App\Domain\Audit\Audit;
 use App\Domain\Members\Models\Member;
 use App\Http\Controllers\Controller;
@@ -141,6 +142,36 @@ class PositionController extends Controller
             : "{$position->name} saved.");
 
         return back();
+    }
+
+    /**
+     * Preview Kertai as this position. Nothing can be changed until the
+     * preview ends.
+     */
+    public function viewAs(Request $request, Position $position): RedirectResponse
+    {
+        $request->session()->put(ViewAs::SESSION_KEY, $position->id);
+        $this->toast("Viewing Kertai as {$position->name}. Changes are switched off until you exit.");
+
+        return to_route('dashboard');
+    }
+
+    public function viewAsMember(Request $request): RedirectResponse
+    {
+        $request->session()->put(ViewAs::SESSION_KEY, ViewAs::MEMBER);
+        $this->toast('Viewing Kertai as an ordinary member. Changes are switched off until you exit.');
+
+        return to_route('dashboard');
+    }
+
+    public function stopViewAs(Request $request): RedirectResponse
+    {
+        $request->session()->forget(ViewAs::SESSION_KEY);
+        $this->toast('Back to your own access.');
+
+        return $request->user()->hasPermission(Permission::PositionsManage->value)
+            ? to_route('positions.index')
+            : to_route('dashboard');
     }
 
     public function destroy(Position $position): RedirectResponse

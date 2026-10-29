@@ -28,6 +28,7 @@ final class GroupSettings
         'members_see_group_finances' => false,
         'payer_pays_mpesa_fees' => true,
         'sms_costs_from_group_fund' => true,
+        'birthday_greetings' => true,
         'project_profit_basis' => 'contribution',
         'share_out_month' => 12,
         // Loans. New lending stays off until the group agrees to it; loans

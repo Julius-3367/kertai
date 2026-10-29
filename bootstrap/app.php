@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\BlockChangesWhileViewingAs;
 use App\Http\Middleware\EnsureGroupMember;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\HandleAppearance;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             SetCurrentGroup::class,
             EnsurePasswordChanged::class,
             HandleInertiaRequests::class,
+            BlockChangesWhileViewingAs::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 

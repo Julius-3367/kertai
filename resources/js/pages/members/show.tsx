@@ -3,6 +3,11 @@ import { FileDown, KeyRound, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { ActionButton, FormDialog, Tabs } from '@/components/kertai/actions';
 import {
+    PendingChangePanel,
+    RequestChangeButton,
+} from '@/components/kertai/change-request';
+import type { PendingChange } from '@/components/kertai/change-request';
+import {
     CheckField,
     Field,
     Select,
@@ -107,9 +112,19 @@ type Props = {
         }[];
     } | null;
     isSelf: boolean;
+    changeRequest: PendingChange | null;
+    changeFields: Record<string, string>;
+    canDecideChanges: boolean;
 };
 
-export default function MemberShow({ member, finance, isSelf }: Props) {
+export default function MemberShow({
+    member,
+    finance,
+    isSelf,
+    changeRequest,
+    changeFields,
+    canDecideChanges,
+}: Props) {
     const can = useCan();
     const [tab, setTab] = useState<'profile' | 'money' | 'actions'>(
         finance ? 'money' : 'profile',
@@ -153,9 +168,23 @@ export default function MemberShow({ member, finance, isSelf }: Props) {
                                     </Link>
                                 </Button>
                             )}
+                            {isSelf && (
+                                <RequestChangeButton
+                                    current={member}
+                                    labels={changeFields}
+                                />
+                            )}
                         </>
                     }
                 />
+
+                {changeRequest && (isSelf || canDecideChanges) && (
+                    <PendingChangePanel
+                        change={changeRequest}
+                        isSelf={isSelf}
+                        canDecide={canDecideChanges}
+                    />
+                )}
 
                 {member.status === 'exiting' && member.notice_ends_on && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">

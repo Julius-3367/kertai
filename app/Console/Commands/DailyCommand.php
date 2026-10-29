@@ -20,8 +20,8 @@ use Illuminate\Console\Command;
 /**
  * The once-a-day jobs for every group: raise this month's dues on the 1st,
  * remind members before the due day, charge late fines, nudge members in
- * arrears weekly, charge loan interest on each loan's monthly date, and
- * remind officials of compliance deadlines.
+ * arrears weekly, charge loan interest on each loan's monthly date, remind
+ * officials of compliance deadlines and greet members on their birthday.
  */
 class DailyCommand extends Command
 {
@@ -65,10 +65,29 @@ class DailyCommand extends Command
 
                 $this->remindCompliance($group, $today, $notifier);
                 $this->remindMeetingsToday($group, $today, $notifier);
+
+                if ($settings->get('birthday_greetings')) {
+                    $this->greetBirthdays($group, $today, $notifier);
+                }
             });
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Members born on 29 February are greeted on the 28th in other years.
+     */
+    private function greetBirthdays(Group $group, CarbonImmutable $today, Notifier $notifier): void
+    {
+        $leapDay = ! $today->isLeapYear() && $today->month === 2 && $today->day === 28;
+
+        $members = Member::query()->active()->whereNotNull('date_of_birth')->get()
+            ->filter(fn (Member $m) => ($m->date_of_birth->month === $today->month && $m->date_of_birth->day === $today->day)
+                || ($leapDay && $m->date_of_birth->month === 2 && $m->date_of_birth->day === 29));
+
+        $members->each(fn (Member $m) => $notifier->toMember($m, 'birthday', [], ['sms']));
+        $this->line("{$group->name}: {$members->count()} birthday greetings");
     }
 
     /**
