@@ -107,11 +107,17 @@ class PositionController extends Controller
             'permissions.*' => [Rule::in(Permission::values())],
         ]);
 
-        if ($position->slug === 'system-admin') {
-            $money = array_filter($data['permissions'] ?? [], fn ($p) => Permission::from($p)->touchesMoney());
+        $permissions = array_values($data['permissions'] ?? []);
+        $manage = Permission::PositionsManage->value;
 
-            if ($money !== []) {
-                throw new RuleViolation('The system administrator cannot be given access to money.');
+        // Any position can be given any access, but someone currently in
+        // office must still be able to manage positions afterwards.
+        if (in_array($manage, $position->permissions ?? [], true) && ! in_array($manage, $permissions, true)) {
+            $others = PositionTerm::query()->current()->with('position')->where('position_id', '!=', $position->id)->get()
+                ->contains(fn (PositionTerm $t) => in_array($manage, $t->position->permissions ?? [], true));
+
+            if (! $others) {
+                throw new RuleViolation('No one else in office can manage positions. Give that access to another position first.');
             }
         }
 
@@ -120,14 +126,19 @@ class PositionController extends Controller
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
             'max_holders' => $data['max_holders'] ?? null,
-            'permissions' => array_values($data['permissions'] ?? []),
+            'permissions' => $permissions,
         ]);
 
+        $added = array_values(array_diff($position->permissions, $before));
         Audit::log('position.updated', "Updated position {$position->name}", $position, [
-            'added' => array_values(array_diff($position->permissions, $before)),
+            'added' => $added,
             'removed' => array_values(array_diff($before, $position->permissions)),
         ]);
-        $this->toast("{$position->name} saved.");
+
+        $addedMoney = array_filter($added, fn ($p) => Permission::from($p)->touchesMoney());
+        $this->toast($position->slug === 'system-admin' && $addedMoney !== []
+            ? "{$position->name} saved. It now has access to money as well as the payment keys. Payouts still need two approvals, and no one can approve their own."
+            : "{$position->name} saved.");
 
         return back();
     }

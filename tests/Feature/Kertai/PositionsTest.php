@@ -2,6 +2,7 @@
 
 use App\Domain\Access\Models\Position;
 use App\Domain\Access\Models\PositionTerm;
+use App\Domain\Audit\Models\AuditLog;
 
 it('creates a vice chair by copying the chair and lets the chair adjust it', function () {
     $chair = $this->official('chairperson');
@@ -22,19 +23,39 @@ it('creates a vice chair by copying the chair and lets the chair adjust it', fun
     $this->actingAs($chair)->post('/positions', ['name' => 'Vice chairperson', 'copy_from' => $source->id])->assertSessionHasErrors('action');
 });
 
-it('never gives the system administrator money permissions', function () {
+it('keeps money from the system administrator by default but lets it be granted, on the record', function () {
     $admin = $this->official('system-admin');
     $position = Position::query()->where('slug', 'system-admin')->firstOrFail();
-
-    $this->actingAs($admin)->put("/positions/{$position->id}", [
-        'name' => 'System administrator',
-        'permissions' => [...$position->permissions, 'payouts.approve'],
-    ])->assertSessionHasErrors('action');
 
     $this->actingAs($admin)->get('/payments')->assertForbidden();
     $this->actingAs($admin)->get('/ledger')->assertForbidden();
     $this->actingAs($admin)->get('/admin/integrations')->assertOk();
     $this->actingAs($admin)->get('/members')->assertOk()->assertInertia(fn ($p) => $p->where('showMoney', false));
+
+    $this->actingAs($admin)->put("/positions/{$position->id}", [
+        'name' => 'System administrator',
+        'permissions' => [...$position->permissions, 'finance.view'],
+    ])->assertSessionHasNoErrors();
+
+    expect($position->refresh()->permissions)->toContain('finance.view');
+    $this->actingAs($admin->fresh())->get('/ledger')->assertOk();
+
+    $entry = AuditLog::withoutGlobalScopes()->where('action', 'position.updated')->latest('id')->firstOrFail();
+    expect($entry->properties['added'])->toBe(['finance.view']);
+});
+
+it('does not let the last position in office that manages positions lose that access', function () {
+    $chair = $this->official('chairperson');
+    $position = Position::query()->where('slug', 'chairperson')->firstOrFail();
+    $without = array_values(array_diff($position->permissions, ['positions.manage']));
+
+    $this->actingAs($chair)->put("/positions/{$position->id}", ['name' => 'Chairperson', 'permissions' => $without])
+        ->assertSessionHasErrors('action');
+
+    $this->official('system-admin');
+
+    $this->actingAs($chair)->put("/positions/{$position->id}", ['name' => 'Chairperson', 'permissions' => $without])
+        ->assertSessionHasNoErrors();
 });
 
 it('limits holders, allows acting appointments that lapse on their own', function () {
