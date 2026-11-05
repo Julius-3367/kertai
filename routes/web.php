@@ -43,6 +43,7 @@ Route::get('/', function () {
     $group = Group::query()->first();
 
     return Inertia::render('welcome', [
+        'canRegister' => Route::has('register'),
         'group' => $group ? ['name' => $group->name, 'location' => $group->location, 'paybill' => $group->paybill, 'paybill_account' => $group->paybill_account] : null,
         'fundraisers' => $group ? Fundraiser::withoutGlobalScopes()->where('group_id', $group->id)->where('status', 'active')->latest()->limit(3)->get()
             ->map(fn ($f) => ['slug' => $f->slug, 'title' => $f->title, 'summary' => $f->summary, 'target' => $f->target, 'raised' => $f->raised()]) : [],
