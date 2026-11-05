@@ -144,6 +144,24 @@ final class DefaultTemplates
                 'en' => 'Dear {name}, your request to change {fields} was {decision}. {reason} {group}',
                 'sw' => 'Mpendwa {name}, ombi lako la kubadilisha {fields} lime{decision_sw}. {reason} {group}',
             ],
+            'signup_new' => [
+                'label' => 'Someone signed up',
+                'subject' => '{applicant} asked for a login',
+                'en' => 'Dear {name}, {applicant} ({phone}) signed up as {kind}. Open {link} to approve or reject. {group}',
+                'sw' => 'Mpendwa {name}, {applicant} ({phone}) ameomba akaunti kama {kind_sw}. Fungua {link} kukubali au kukataa. {group}',
+            ],
+            'signup_approved' => [
+                'label' => 'Sign-up approved',
+                'subject' => 'Your {group} login is ready',
+                'en' => 'Dear {name}, your sign-up has been approved. Sign in at {link} with {login} and the password you chose. {group}',
+                'sw' => 'Mpendwa {name}, ombi lako limekubaliwa. Ingia {link} kwa {login} na nenosiri ulilochagua. {group}',
+            ],
+            'signup_rejected' => [
+                'label' => 'Sign-up not approved',
+                'subject' => 'Your {group} sign-up',
+                'en' => 'Dear {name}, your request for a {group} login was not approved. {reason} Please contact the secretary.',
+                'sw' => 'Mpendwa {name}, ombi lako la akaunti ya {group} halikukubaliwa. {reason} Tafadhali wasiliana na katibu.',
+            ],
         ];
     }
 }

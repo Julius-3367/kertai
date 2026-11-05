@@ -161,7 +161,8 @@ return [
     */
 
     'features' => [
-        // No public sign-up: officials create accounts from the member register.
+        // Fortify's registration stays off: it signs people in straight away.
+        // Our own /register only files a request (see SignupController).
         Features::resetPasswords(),
         Features::twoFactorAuthentication([
             'confirm' => true,
