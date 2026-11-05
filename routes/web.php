@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\GroupSettingsController;
 use App\Http\Controllers\Admin\IntegrationController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Auth\FirstPasswordController;
+use App\Http\Controllers\Auth\SignupController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Finance\DueController;
 use App\Http\Controllers\Finance\LedgerController;
@@ -55,6 +56,11 @@ Route::get('f/{slug}/payments/{key}', [PublicFundraiserController::class, 'statu
 
 Route::post('webhooks/simulinkpay', SimulinkPayWebhookController::class)->middleware('throttle:120,1')->name('webhooks.simulinkpay');
 Route::post('webhooks/sms/{token}', InboundSmsController::class)->middleware('throttle:120,1')->name('webhooks.sms');
+
+Route::middleware('guest')->group(function () {
+    Route::get('register', [SignupController::class, 'create'])->name('register');
+    Route::post('register', [SignupController::class, 'store'])->middleware('throttle:5,1')->name('register.store');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('welcome/password', [FirstPasswordController::class, 'show'])->name('password.first');
@@ -108,6 +114,7 @@ Route::middleware(['auth', 'member'])->group(function () {
         Route::get('members/import/template', [MemberImportController::class, 'template'])->name('members.import.template');
         Route::post('members/import', [MemberImportController::class, 'store'])->name('members.import.store');
         Route::post('member-changes/{change}/decide', [ChangeRequestController::class, 'decide'])->name('changes.decide');
+        Route::post('signups/{signup}/decide', [SignupController::class, 'decide'])->name('signups.decide');
         Route::get('members/create', [MemberController::class, 'create'])->name('members.create');
         Route::post('members', [MemberController::class, 'store'])->name('members.store');
         Route::get('members/{member}/edit', [MemberController::class, 'edit'])->name('members.edit');

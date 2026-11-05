@@ -1,7 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Upload } from 'lucide-react';
 import { useState } from 'react';
-import { Select } from '@/components/kertai/fields';
+import { ActionButton, FormDialog } from '@/components/kertai/actions';
+import { Field, Select } from '@/components/kertai/fields';
 import {
     EmptyState,
     Page,
@@ -37,15 +38,33 @@ type Row = {
     arrears: number | null;
 };
 
+type Signup = {
+    id: number;
+    name: string;
+    phone: string;
+    email: string | null;
+    id_number: string | null;
+    at: string;
+    member: {
+        id: number;
+        member_number: string;
+        name: string;
+        phone: string;
+        id_number: string | null;
+    } | null;
+};
+
 export default function MembersIndex({
     members,
     filters,
     showMoney,
+    pendingSignups,
     pendingChanges,
 }: {
     members: Row[];
     filters: { q?: string; status?: string };
     showMoney: boolean;
+    pendingSignups: Signup[];
     pendingChanges: {
         member_id: number;
         name: string;
@@ -87,6 +106,104 @@ export default function MembersIndex({
                         )
                     }
                 />
+                {pendingSignups.length > 0 && (
+                    <Section
+                        title="Sign-ups waiting for approval"
+                        description="Check each one against the register before approving. Approving creates the login with the password they chose."
+                    >
+                        <ul className="-my-2 divide-y">
+                            {pendingSignups.map((s) => (
+                                <li
+                                    key={s.id}
+                                    className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+                                >
+                                    <div className="grid gap-0.5">
+                                        <span>
+                                            <span className="font-medium">
+                                                {s.name}
+                                            </span>{' '}
+                                            <span className="text-muted-foreground">
+                                                {s.phone} · ID{' '}
+                                                {s.id_number ?? '–'}
+                                                {s.email && ` · ${s.email}`}
+                                            </span>
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {s.member ? (
+                                                <>
+                                                    Matches{' '}
+                                                    <Link
+                                                        href={`/members/${s.member.id}`}
+                                                        className="underline"
+                                                    >
+                                                        {s.member.member_number}{' '}
+                                                        {s.member.name}
+                                                    </Link>
+                                                    {s.member.phone !==
+                                                        s.phone &&
+                                                        ` (register phone ${s.member.phone}, will change to ${s.phone})`}
+                                                </>
+                                            ) : (
+                                                'New member: approving adds them to the register'
+                                            )}{' '}
+                                            · {formatDate(s.at)}
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <ActionButton
+                                            url={`/signups/${s.id}/decide`}
+                                            data={{ decision: 'approved' }}
+                                            size="sm"
+                                            confirm={
+                                                s.member
+                                                    ? `Give ${s.name} a login for ${s.member.member_number}?`
+                                                    : `Add ${s.name} as a new member and give them a login?`
+                                            }
+                                        >
+                                            Approve
+                                        </ActionButton>
+                                        <FormDialog
+                                            trigger={
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    Reject
+                                                </Button>
+                                            }
+                                            title={`Reject ${s.name}`}
+                                            initial={{
+                                                decision: 'rejected',
+                                                reason: '',
+                                            }}
+                                            action={`/signups/${s.id}/decide`}
+                                            submitLabel="Reject"
+                                            destructive
+                                        >
+                                            {(form) => (
+                                                <Field
+                                                    label="Reason (sent by SMS)"
+                                                    htmlFor={`su-reason-${s.id}`}
+                                                >
+                                                    <Input
+                                                        id={`su-reason-${s.id}`}
+                                                        value={form.data.reason}
+                                                        onChange={(e) =>
+                                                            form.setData(
+                                                                'reason',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                </Field>
+                                            )}
+                                        </FormDialog>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </Section>
+                )}
                 {pendingChanges.length > 0 && (
                     <Section
                         title="Details waiting for approval"

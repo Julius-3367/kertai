@@ -11,6 +11,7 @@ use App\Domain\Members\MemberFinance;
 use App\Domain\Members\Models\Dependant;
 use App\Domain\Members\Models\Member;
 use App\Domain\Members\Models\MemberChangeRequest;
+use App\Domain\Members\Models\SignupRequest;
 use App\Domain\Payments\Models\Payment;
 use App\Http\Controllers\Controller;
 use App\Support\Phone;
@@ -26,6 +27,7 @@ class MemberController extends Controller
     public function index(Request $request, MemberFinance $finance): Response
     {
         $showMoney = $request->user()->hasPermission(Permission::FinanceView->value);
+        $canManage = $request->user()->hasPermission(Permission::MembersManage->value);
 
         $members = Member::query()
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
@@ -53,7 +55,24 @@ class MemberController extends Controller
             'members' => $members,
             'filters' => $request->only('q', 'status'),
             'showMoney' => $showMoney,
-            'pendingChanges' => $request->user()->hasPermission(Permission::MembersManage->value)
+            'pendingSignups' => $canManage
+                ? SignupRequest::query()->with('member')->where('status', 'pending')->oldest()->get()->map(fn (SignupRequest $s) => [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'phone' => Phone::display($s->phone),
+                    'email' => $s->email,
+                    'id_number' => $s->id_number,
+                    'at' => $s->created_at->toIso8601String(),
+                    'member' => $s->member ? [
+                        'id' => $s->member->id,
+                        'member_number' => $s->member->member_number,
+                        'name' => $s->member->name,
+                        'phone' => Phone::display($s->member->phone),
+                        'id_number' => $s->member->id_number,
+                    ] : null,
+                ])
+                : [],
+            'pendingChanges' => $canManage
                 ? MemberChangeRequest::query()->with('member')->where('status', 'pending')->oldest()->get()->map(fn (MemberChangeRequest $c) => [
                     'member_id' => $c->member_id,
                     'name' => $c->member->name,

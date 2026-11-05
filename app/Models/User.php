@@ -93,4 +93,10 @@ class User extends Authenticatable implements PasskeyUser
     {
         return in_array($permission, $this->permissions(), true);
     }
+
+    /** Checked on every sign-in, by password or passkey. */
+    public function canSignIn(): bool
+    {
+        return ! ($this->member && in_array($this->member->status, ['exited', 'deceased', 'suspended'], true));
+    }
 }

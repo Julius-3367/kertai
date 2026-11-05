@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\ResetUserPassword;
+use App\Domain\Members\Models\SignupRequest;
 use App\Models\User;
 use App\Support\Phone;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -12,9 +13,12 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Contracts\PasskeyUser;
+use Laravel\Passkeys\Passkeys;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -56,11 +60,13 @@ class FortifyServiceProvider extends ServiceProvider
                 )
                 ->first();
 
-            if (! $user || ! Hash::check((string) $request->input('password'), $user->password)) {
+            if (! $user) {
+                $this->refuseWaitingSignup($request, $login, $phone);
+
                 return null;
             }
 
-            if ($user->member && in_array($user->member->status, ['exited', 'deceased', 'suspended'], true)) {
+            if (! Hash::check((string) $request->input('password'), $user->password) || ! $user->canSignIn()) {
                 return null;
             }
 
@@ -68,6 +74,37 @@ class FortifyServiceProvider extends ServiceProvider
 
             return $user;
         });
+
+        // Passkey sign-in skips authenticateUsing, so apply the same rule here.
+        Passkeys::authorizeLoginUsing(fn (Request $request, PasskeyUser $user) => $user instanceof User && $user->canSignIn());
+    }
+
+    /**
+     * Someone who signed up but is not approved yet has no user, so a plain
+     * "these credentials do not match" would confuse them. Only say more when
+     * the password is right, so the form does not reveal who has applied.
+     */
+    private function refuseWaitingSignup(Request $request, string $login, ?string $phone): void
+    {
+        $signup = SignupRequest::withoutGlobalScopes()
+            ->when(
+                $phone !== null,
+                fn ($q) => $q->where('phone', $phone),
+                fn ($q) => $q->where('email', Str::lower($login)),
+            )
+            ->whereIn('status', ['pending', 'rejected'])
+            ->latest('id')
+            ->first();
+
+        if (! $signup || ! Hash::check((string) $request->input('password'), $signup->password)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            Fortify::username() => $signup->status === 'pending'
+                ? 'Your account is waiting for approval. You will get an SMS once the secretary approves it.'
+                : 'Your sign-up was not approved. Please contact the secretary.',
+        ]);
     }
 
     /**

@@ -94,9 +94,13 @@ export default function Login({ status, canResetPassword }: Props) {
                         </div>
 
                         <p className="text-center text-sm text-muted-foreground">
-                            No login yet? Ask the secretary to send you one.
-                            Forgot your password and have no email? The
-                            secretary can send a new one by SMS.
+                            No login yet?{' '}
+                            <TextLink href="/register" tabIndex={6}>
+                                Request one
+                            </TextLink>{' '}
+                            and the secretary will approve it. Forgot your
+                            password and have no email? The secretary can send a
+                            new one by SMS.
                         </p>
                     </>
                 )}
