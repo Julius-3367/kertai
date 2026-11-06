@@ -260,6 +260,33 @@ final class LoanBook
     }
 
     /**
+     * Part of a payout to the borrower held back to pay their loan. Checked
+     * before the ledger entry, recorded on the loan after it.
+     */
+    public function checkPayoutDeduction(Loan $loan, int $amount): int
+    {
+        $owed = $this->balance($loan)['total'];
+
+        if ($loan->status !== 'active' || $amount > $owed) {
+            throw new RuleViolation('Only '.Money::format(max(0, $owed))." is now owed on loan {$loan->reference()}. Change the deduction before paying.");
+        }
+
+        return $amount;
+    }
+
+    public function repayFromPayout(Loan $loan, int $amount, Payout $payout, int $journalEntryId): LoanTransaction
+    {
+        $loan = Loan::withoutGlobalScopes()->lockForUpdate()->findOrFail($loan->id);
+        [$principal, $interest] = $this->split($loan, $amount, $this->balance($loan));
+        $line = $this->write($loan, 'repayment', -$principal, -$interest, CarbonImmutable::today(), "Deducted from payout #{$payout->number}", journalEntryId: $journalEntryId);
+        $this->closeIfPaid($loan);
+
+        Audit::log('loan.repaid_from_payout', Money::format($amount)." of loan {$loan->reference()} deducted from payout #{$payout->number}", $loan, [], $loan->group_id);
+
+        return $line;
+    }
+
+    /**
      * Undo the loan side of a repayment whose payment is being reversed.
      */
     public function reverseRepayment(Payment $payment, string $reason): void

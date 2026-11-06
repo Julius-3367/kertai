@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Finance;
 use App\Domain\Access\Permission;
 use App\Domain\Ledger\Ledger;
 use App\Domain\Ledger\Models\Account;
+use App\Domain\Loans\LoanBook;
+use App\Domain\Loans\Models\Loan;
 use App\Domain\Members\Models\Member;
+use App\Domain\Payouts\Actions\AdjustPayout;
 use App\Domain\Payouts\Actions\CancelPayout;
 use App\Domain\Payouts\Actions\DecidePayout;
 use App\Domain\Payouts\Actions\MarkPayoutPaid;
 use App\Domain\Payouts\Actions\RequestPayout;
 use App\Domain\Payouts\Models\Payout;
+use App\Domain\Payouts\Models\PayoutAdjustment;
 use App\Domain\Payouts\Models\PayoutApproval;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -32,7 +36,7 @@ class PayoutController extends Controller
         $status = $request->string('status')->toString();
 
         $payouts = Payout::query()
-            ->with(['account:id,name', 'approvals'])
+            ->with(['account:id,name', 'approvals', 'adjustments'])
             ->when($status === 'mine', fn ($q) => $q->awaitingDecisionBy($user))
             ->when($status !== '' && $status !== 'mine', fn ($q) => $q->where('status', $status))
             ->latest('id')
@@ -87,10 +91,17 @@ class PayoutController extends Controller
         return to_route('payouts.show', $payout);
     }
 
-    public function show(Request $request, Payout $payout): Response
+    public function show(Request $request, Payout $payout, LoanBook $loans): Response
     {
         $user = $request->user();
-        $payout->load(['approvals.user', 'account', 'payee', 'requester', 'payer']);
+        $payout->load(['approvals.user', 'account', 'payee', 'requester', 'payer', 'adjustments.loan', 'adjustments.adder']);
+        $canAdjust = in_array($payout->status, ['pending', 'approved'], true)
+            && $payout->payee_member_id !== null
+            && $payout->type !== 'loan'
+            && $user->hasPermission(Permission::PayoutsPay->value);
+        $payeeLoans = $canAdjust
+            ? Loan::query()->where('member_id', $payout->payee_member_id)->active()->get()
+            : collect();
 
         return Inertia::render('payouts/show', [
             'payout' => [
@@ -108,10 +119,26 @@ class PayoutController extends Controller
                     'at' => $a->created_at->toIso8601String(),
                 ]),
                 'journal_entry_id' => $payout->journal_entry_id,
+                'adjustments' => $payout->adjustments->map(fn (PayoutAdjustment $a) => [
+                    'id' => $a->id,
+                    'kind' => $a->kind,
+                    'label' => $a->kind === 'loan' && $a->loan ? "Loan {$a->loan->reference()} repayment" : PayoutAdjustment::KINDS[$a->kind],
+                    'amount' => $a->amount,
+                    'effect' => $a->effect(),
+                    'reason' => $a->reason,
+                    'by' => $a->adder?->name,
+                ]),
             ],
+            'loans' => $payeeLoans->map(fn (Loan $l) => [
+                'id' => $l->id,
+                'label' => $l->reference().', '.Money::format($loans->balance($l)['total']).' owed',
+                'owed' => $loans->balance($l)['total'],
+            ])->values(),
+            'adjustmentKinds' => PayoutAdjustment::KINDS,
             'can' => [
                 'decide' => $this->canDecide($payout, $user),
                 'pay' => $payout->status === 'approved' && $user->hasPermission(Permission::PayoutsPay->value),
+                'adjust' => $canAdjust,
                 'cancel' => in_array($payout->status, ['pending', 'approved'], true)
                     && ($payout->requested_by === $user->id || $user->hasPermission(Permission::PayoutsPay->value)),
             ],
@@ -177,6 +204,29 @@ class PayoutController extends Controller
         return back();
     }
 
+    public function addAdjustment(Request $request, Payout $payout, AdjustPayout $adjust): RedirectResponse
+    {
+        $data = $request->validate([
+            'kind' => ['required', Rule::in(array_keys(PayoutAdjustment::KINDS))],
+            'amount' => Money::rule(),
+            'loan_id' => ['nullable', 'required_if:kind,loan', 'integer'],
+            'reason' => ['required', 'string', 'max:200'],
+        ], ['loan_id.required_if' => 'Choose the loan.']);
+
+        $adjust->add($payout, $request->user(), $data['kind'], $this->cents($data['amount']), $data['reason'], isset($data['loan_id']) ? (int) $data['loan_id'] : null);
+        $this->toast('Saved. '.Money::format($payout->refresh()->load('adjustments')->net()).' will be sent. The payout needs two approvals for the new amount.');
+
+        return back();
+    }
+
+    public function removeAdjustment(Request $request, Payout $payout, PayoutAdjustment $adjustment, AdjustPayout $adjust): RedirectResponse
+    {
+        $adjust->remove($payout, $adjustment, $request->user());
+        $this->toast('Removed. The payout needs two approvals for the new amount.');
+
+        return back();
+    }
+
     public function cancel(Request $request, Payout $payout, CancelPayout $cancel): RedirectResponse
     {
         $user = $request->user();
@@ -210,6 +260,7 @@ class PayoutController extends Controller
             'type_label' => $p->typeLabel(),
             'status' => $p->status,
             'amount' => $p->amount,
+            'net' => $p->net(),
             'fund' => $p->account->name,
             'payee_name' => $p->payee_name,
             'payee_member_id' => $p->payee_member_id,

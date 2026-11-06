@@ -33,6 +33,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $payable_id
  * @property string|null $batch
  * @property int|null $requested_by
+ * @property int|null $adjusted_by
  * @property Carbon|null $approved_at
  * @property Carbon|null $rejected_at
  * @property Carbon|null $paid_at
@@ -123,6 +124,18 @@ class Payout extends Model
             ->where(fn ($q) => $q->whereNull('requested_by')->orWhere('requested_by', '!=', $user->id))
             ->where(fn ($q) => $q->whereNull('payee_member_id')->orWhere('payee_member_id', '!=', $user->member->id ?? 0))
             ->whereDoesntHave('approvals', fn ($a) => $a->where('user_id', $user->id));
+    }
+
+    /** @return HasMany<PayoutAdjustment, $this> */
+    public function adjustments(): HasMany
+    {
+        return $this->hasMany(PayoutAdjustment::class)->orderBy('id');
+    }
+
+    /** What actually leaves the bank or M-Pesa once deductions and refunds are applied. */
+    public function net(): int
+    {
+        return $this->amount + (int) $this->adjustments->sum(fn (PayoutAdjustment $a) => $a->effect());
     }
 
     public function typeLabel(): string
