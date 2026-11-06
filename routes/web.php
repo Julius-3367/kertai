@@ -204,6 +204,8 @@ Route::middleware(['auth', 'member'])->group(function () {
     Route::post('payouts/approve-many', [PayoutController::class, 'bulkApprove'])->middleware('can:'.P::PayoutsApprove->value)->name('payouts.bulk-approve');
     Route::post('payouts/{payout}/decide', [PayoutController::class, 'decide'])->middleware('can:'.P::PayoutsApprove->value)->name('payouts.decide');
     Route::post('payouts/{payout}/pay', [PayoutController::class, 'pay'])->middleware('can:'.P::PayoutsPay->value)->name('payouts.pay');
+    Route::post('payouts/{payout}/adjustments', [PayoutController::class, 'addAdjustment'])->middleware('can:'.P::PayoutsPay->value)->name('payouts.adjustments.store');
+    Route::delete('payouts/{payout}/adjustments/{adjustment}', [PayoutController::class, 'removeAdjustment'])->middleware('can:'.P::PayoutsPay->value)->name('payouts.adjustments.destroy');
     Route::post('payouts/{payout}/cancel', [PayoutController::class, 'cancel'])->name('payouts.cancel');
     Route::post('share-out', [ShareOutController::class, 'store'])->middleware('can:'.P::PayoutsRequest->value)->name('share-out.store');
 
