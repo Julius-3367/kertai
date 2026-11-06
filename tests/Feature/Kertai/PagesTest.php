@@ -77,6 +77,7 @@ it('renders every page for the people who use it, and hides money from those who
         [$secretary, "/welfare/{$case->id}", 'welfare/show'],
         [$projects, '/projects', 'projects/index'],
         [$projects, "/projects/{$project->id}", 'projects/show'],
+        [$member, "/projects/{$project->id}", 'projects/show'],
         [$member, '/assets', 'assets/index'],
         [$member, '/meetings', 'meetings/index'],
         [$member, "/meetings/{$meeting->id}", 'meetings/show'],
@@ -111,7 +112,7 @@ it('renders every page for the people who use it, and hides money from those who
     $this->get('/register')->assertOk()->assertInertia(fn ($p) => $p->component('auth/register'));
 
     // An ordinary member sees their own things only.
-    foreach (['/members', '/dues', '/payments', '/payouts', '/ledger', '/reports', '/share-out', '/positions', '/welfare', '/projects', '/messages', '/rules', '/admin/integrations', '/admin/audit', '/admin/backups', "/statements/{$someone->id}", "/members/{$someone->id}"] as $url) {
+    foreach (['/members', '/dues', '/payments', '/payouts', '/ledger', '/reports', '/share-out', '/positions', '/welfare', '/messages', '/rules', '/admin/integrations', '/admin/audit', '/admin/backups', "/statements/{$someone->id}", "/members/{$someone->id}"] as $url) {
         $this->actingAs($member)->get($url)->assertForbidden();
     }
 

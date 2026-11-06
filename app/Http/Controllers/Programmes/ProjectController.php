@@ -8,15 +8,18 @@ use App\Domain\Ledger\Ledger;
 use App\Domain\Members\Models\Member;
 use App\Domain\Payments\Actions\InitiateStkPayment;
 use App\Domain\Payments\Actions\RecordPayment;
-use App\Domain\Payouts\Actions\RequestPayout;
 use App\Domain\Payouts\Models\Payout;
 use App\Domain\Projects\Models\Project;
+use App\Domain\Projects\Models\ProjectCost;
 use App\Domain\Projects\Models\ProjectEntry;
 use App\Domain\Projects\Models\ProjectItem;
 use App\Domain\Projects\Models\ProjectParticipant;
+use App\Domain\Projects\Models\ProjectPlot;
+use App\Domain\Projects\Models\ProjectSeason;
 use App\Domain\Projects\Models\Sale;
 use App\Domain\Projects\Models\StockMovement;
 use App\Domain\Projects\ProjectBook;
+use App\Domain\Projects\ProjectCosting;
 use App\Http\Controllers\Controller;
 use App\Support\Money;
 use App\Support\Phone;
@@ -64,10 +67,17 @@ class ProjectController extends Controller
         return to_route('projects.show', $project);
     }
 
-    public function show(Request $request, Project $project, Ledger $ledger, ProjectBook $book): Response
+    public function show(Request $request, Project $project, Ledger $ledger, ProjectBook $book, ProjectCosting $costing): Response
     {
         $pnl = $project->profitAndLoss();
         $undistributed = max(0, $pnl['profit'] - $pnl['distributed']);
+        $user = $request->user();
+        $canManage = $user->hasPermission(Permission::ProjectsManage->value);
+        // Phone numbers of buyers, suppliers and landlords stay with the people running projects.
+        $showPhones = $canManage || $user->hasPermission(Permission::ProjectsView->value) || $project->costsManagedBy($user);
+        $phone = fn (?string $p) => $p && $showPhones ? Phone::display($p) : null;
+        $acres = $project->acres();
+        $seasons = $project->seasons()->with('budgetLines')->get();
 
         return Inertia::render('projects/show', [
             'project' => [
@@ -125,10 +135,75 @@ class ProjectController extends Controller
                 'paid' => $s->paid,
                 'balance' => $s->balance(),
                 'buyer_name' => $s->buyer_name,
-                'buyer_phone' => $s->buyer_phone ? Phone::display($s->buyer_phone) : null,
+                'buyer_phone' => $phone($s->buyer_phone),
                 'status' => $s->status,
                 'sold_on' => $s->sold_on->toDateString(),
+                'season_id' => $s->project_season_id,
             ]),
+            'plots' => $project->plots()->with('member:id,name')->orderBy('status')->orderBy('name')->get()->map(fn (ProjectPlot $p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'location' => $p->location,
+                'size' => $p->size,
+                'size_unit' => $p->size_unit,
+                'acres' => $p->acres(),
+                'tenure' => $p->tenure,
+                'member_id' => $p->member_id,
+                'member' => $p->member?->name,
+                'owner_name' => $p->owner_name,
+                'owner_phone' => $phone($p->owner_phone),
+                'lease_amount' => $p->lease_amount,
+                'lease_per' => $p->lease_per,
+                'lease_starts_on' => $p->lease_starts_on?->toDateString(),
+                'lease_ends_on' => $p->lease_ends_on?->toDateString(),
+                'lease_ending_soon' => $p->leaseEndingSoon(),
+                'notes' => $p->notes,
+                'status' => $p->status,
+            ]),
+            'seasons' => $seasons->map(fn (ProjectSeason $s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+                'starts_on' => $s->starts_on->toDateString(),
+                'ends_on' => $s->ends_on?->toDateString(),
+                'status' => $s->status,
+                'yield_quantity' => $s->yield_quantity,
+                'yield_unit' => $s->yield_unit,
+                'notes' => $s->notes,
+                'summary' => $costing->summary($project, $s, $acres),
+            ]),
+            'costing' => $costing->summary($project, null, $acres),
+            'costs' => $project->costs()->with(['plot:id,name', 'member:id,name', 'payout:id,number,status'])->limit(500)->get()->map(fn (ProjectCost $c) => [
+                'id' => $c->id,
+                'season_id' => $c->project_season_id,
+                'plot_id' => $c->project_plot_id,
+                'plot' => $c->plot?->name,
+                'category' => $c->category,
+                'description' => $c->description,
+                'quantity' => $c->quantity,
+                'unit' => $c->unit,
+                'unit_cost' => $c->unit_cost,
+                'amount' => $c->amount,
+                'incurred_on' => $c->incurred_on->toDateString(),
+                'supplier_name' => $c->supplier_name,
+                'supplier_phone' => $phone($c->supplier_phone),
+                'receipt_ref' => $c->receipt_ref,
+                'labour_type' => $c->labour_type,
+                'workers' => $c->workers,
+                'days' => $c->days,
+                'paid_by' => $c->paid_by,
+                'member' => $c->member?->name,
+                'payout_id' => $c->payout_id,
+                'payout_number' => $c->payout?->number,
+                'state' => $c->state(),
+            ]),
+            'costOptions' => [
+                'categories' => ProjectCost::CATEGORIES,
+                'units' => ProjectCost::UNITS,
+                'labourTypes' => ProjectCost::LABOUR_TYPES,
+                'tenures' => ProjectPlot::TENURES,
+                'leasePer' => ProjectPlot::LEASE_PER,
+            ],
+            'canManageCosts' => $project->costsManagedBy($user),
             'expenses' => Payout::query()->where('payable_type', $project->getMorphClass())->where('payable_id', $project->id)->latest('id')->get()->map(fn (Payout $p) => [
                 'id' => $p->id,
                 'number' => $p->number,
@@ -137,9 +212,8 @@ class ProjectController extends Controller
                 'status' => $p->status,
             ]),
             'sharePreview' => $undistributed > 0 ? $book->shareOutPreview($project, $undistributed)['shares'] : [],
-            'canManage' => $request->user()->hasPermission(Permission::ProjectsManage->value),
-            'canRecordMoney' => $request->user()->hasPermission(Permission::PaymentsRecord->value)
-                || $request->user()->hasPermission(Permission::ProjectsManage->value),
+            'canManage' => $canManage,
+            'canRecordMoney' => $canManage || $user->hasPermission(Permission::PaymentsRecord->value),
             'members' => $this->memberOptions(),
             'categories' => Project::CATEGORIES,
         ]);
@@ -255,7 +329,11 @@ class ProjectController extends Controller
         return back();
     }
 
-    public function expense(Request $request, Project $project, RequestPayout $requestPayout): RedirectResponse
+    /**
+     * A quick expense without the cost details. It still lands in the cost
+     * register (as "Other") so the register stays complete.
+     */
+    public function expense(Request $request, Project $project, ProjectCosting $costing): RedirectResponse
     {
         Gate::authorize(Permission::PayoutsRequest->value);
 
@@ -266,19 +344,19 @@ class ProjectController extends Controller
             'payee_phone' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $payout = $requestPayout->handle(
-            $this->group(),
-            'project_expense',
-            $this->cents($data['amount']),
-            $project->fundAccount(),
-            "{$project->name}: {$data['description']}",
-            null,
-            $data['payee_name'],
-            $data['payee_phone'] ?? null,
-            payable: $project,
-        );
+        $cost = $costing->record($this->group(), $project, [
+            'category' => 'other',
+            'description' => $data['description'],
+            'quantity' => '1',
+            'unit' => 'item',
+            'unit_cost' => $this->cents($data['amount']),
+            'incurred_on' => now()->toDateString(),
+            'supplier_name' => $data['payee_name'],
+            'supplier_phone' => Phone::normalize($data['payee_phone'] ?? null),
+            'paid_by' => 'fund',
+        ]);
 
-        $this->toast("Expense raised as payout #{$payout->number}. Two officials must approve it.");
+        $this->toast("Expense raised as payout #{$cost->payout?->number}. Two officials must approve it.");
 
         return back();
     }
@@ -358,9 +436,13 @@ class ProjectController extends Controller
             'member_id' => ['nullable', 'integer', Rule::exists('members', 'id')->where('group_id', $this->group()->id)],
             'sold_on' => ['required', 'date', 'before_or_equal:today'],
             'payment' => ['required', Rule::in(['none', 'cash', 'mpesa'])],
+            'project_season_id' => ['nullable', 'integer', Rule::exists('project_seasons', 'id')->where('project_id', $project->id)],
         ]);
 
         $sale = $book->sell(ProjectItem::findOrFail((int) $data['project_item_id']), [
+            'project_season_id' => isset($data['project_season_id'])
+                ? (int) $data['project_season_id']
+                : $project->seasonFor(CarbonImmutable::parse($data['sold_on']))?->id,
             'buyer_name' => (string) $data['buyer_name'],
             'buyer_phone' => $data['buyer_phone'] ?? null,
             'member_id' => isset($data['member_id']) ? (int) $data['member_id'] : null,

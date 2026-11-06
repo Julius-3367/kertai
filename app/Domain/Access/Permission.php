@@ -57,7 +57,7 @@ enum Permission: string
             self::MgrApproveSwaps => 'Approve merry-go-round swaps',
             self::FundraisersManage => 'Manage fundraisers',
             self::WelfareManage => 'Manage welfare cases',
-            self::ProjectsView => 'View projects',
+            self::ProjectsView => 'See phone numbers on projects',
             self::ProjectsManage => 'Manage projects, stock and sales',
             self::AssetsManage => 'Manage assets and hire',
             self::MeetingsManage => 'Manage meetings and minutes',

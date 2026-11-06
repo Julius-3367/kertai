@@ -12,6 +12,22 @@ import {
 import { useState } from 'react';
 import { ActionButton, FormDialog, Tabs } from '@/components/kertai/actions';
 import {
+    CostsPanel,
+    LandPanel,
+    RecordCostDialog,
+    ReportPanel,
+    SeasonPicker,
+    SeasonsPanel,
+} from '@/components/kertai/project-costing';
+import type {
+    Cost,
+    CostOptions,
+    CostSummary,
+    Plot,
+    Season,
+    SeasonChoice,
+} from '@/components/kertai/project-costing';
+import {
     CheckField,
     Field,
     MemberSelect,
@@ -127,13 +143,27 @@ type Props = {
         contributed: number;
         amount: number;
     }[];
+    plots: Plot[];
+    seasons: Season[];
+    costing: CostSummary;
+    costs: Cost[];
+    costOptions: CostOptions;
     canManage: boolean;
+    canManageCosts: boolean;
     canRecordMoney: boolean;
     members: Option[];
     categories: Record<string, string>;
 };
 
-type Tab = 'overview' | 'participants' | 'stock' | 'book';
+type Tab =
+    | 'overview'
+    | 'costs'
+    | 'land'
+    | 'seasons'
+    | 'report'
+    | 'participants'
+    | 'stock'
+    | 'book';
 
 export default function ProjectShow(props: Props) {
     const {
@@ -145,13 +175,30 @@ export default function ProjectShow(props: Props) {
         sales,
         expenses,
         sharePreview,
+        plots,
+        seasons,
+        costing,
+        costs,
+        costOptions,
         canManage,
+        canManageCosts,
         canRecordMoney,
         members,
         categories,
     } = props;
     const can = useCan();
     const [tab, setTab] = useState<Tab>('overview');
+    const [seasonId, setSeasonId] = useState<SeasonChoice>(
+        () => seasons.find((s) => s.status === 'open')?.id ?? 'all',
+    );
+    const shared = {
+        projectId: project.id,
+        seasons,
+        plots,
+        members,
+        options: costOptions,
+        canManage: canManageCosts,
+    };
 
     return (
         <>
@@ -385,7 +432,18 @@ export default function ProjectShow(props: Props) {
                                     )}
                                 </FormDialog>
                             )}
-                            {can('payouts.request') && (
+                            {canManageCosts && (
+                                <RecordCostDialog
+                                    shared={shared}
+                                    seasonId={seasonId}
+                                    trigger={
+                                        <Button variant="outline">
+                                            <Receipt /> Record a cost
+                                        </Button>
+                                    }
+                                />
+                            )}
+                            {!canManageCosts && can('payouts.request') && (
                                 <FormDialog
                                     title="Project expense"
                                     description="Raised as a payout from the project fund; it needs two approvals before money leaves."
@@ -715,6 +773,14 @@ export default function ProjectShow(props: Props) {
                     onChange={setTab}
                     tabs={[
                         { value: 'overview', label: 'Overview' },
+                        { value: 'costs', label: 'Costs', count: costs.length },
+                        { value: 'land', label: 'Land', count: plots.length },
+                        {
+                            value: 'seasons',
+                            label: 'Seasons and budget',
+                            count: seasons.length,
+                        },
+                        { value: 'report', label: 'Report' },
                         {
                             value: 'participants',
                             label: 'Participants',
@@ -732,6 +798,36 @@ export default function ProjectShow(props: Props) {
                         },
                     ]}
                 />
+
+                {['costs', 'seasons', 'report'].includes(tab) && (
+                    <SeasonPicker
+                        seasons={seasons}
+                        value={seasonId}
+                        onChange={setSeasonId}
+                    />
+                )}
+
+                {tab === 'costs' && (
+                    <CostsPanel
+                        shared={shared}
+                        costs={costs}
+                        seasonId={seasonId}
+                    />
+                )}
+
+                {tab === 'land' && <LandPanel shared={shared} />}
+
+                {tab === 'seasons' && (
+                    <SeasonsPanel shared={shared} seasonId={seasonId} />
+                )}
+
+                {tab === 'report' && (
+                    <ReportPanel
+                        shared={shared}
+                        overall={costing}
+                        seasonId={seasonId}
+                    />
+                )}
 
                 {tab === 'overview' && (
                     <div className="grid gap-6 lg:grid-cols-2">

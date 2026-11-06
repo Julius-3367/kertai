@@ -32,6 +32,7 @@ use App\Http\Controllers\Programmes\MeetingController;
 use App\Http\Controllers\Programmes\MgrController;
 use App\Http\Controllers\Programmes\PollController;
 use App\Http\Controllers\Programmes\ProjectController;
+use App\Http\Controllers\Programmes\ProjectCostingController;
 use App\Http\Controllers\Programmes\WelfareController;
 use App\Http\Controllers\PublicFundraiserController;
 use App\Http\Controllers\Webhooks\InboundSmsController;
@@ -233,11 +234,21 @@ Route::middleware(['auth', 'member'])->group(function () {
         Route::post('welfare/{case}/payout', [WelfareController::class, 'payout'])->name('welfare.payout');
     });
 
-    // Projects
-    Route::middleware('can:'.P::ProjectsView->value)->group(function () {
-        Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
-        Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
-    });
+    // Projects. Every member can follow them; changes are checked in the controllers.
+    Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('projects/{project}/costs.csv', [ProjectCostingController::class, 'csv'])->name('projects.costs.csv');
+    Route::post('projects/{project}/plots', [ProjectCostingController::class, 'storePlot'])->name('projects.plots.store');
+    Route::put('projects/{project}/plots/{plot}', [ProjectCostingController::class, 'updatePlot'])->name('projects.plots.update');
+    Route::delete('projects/{project}/plots/{plot}', [ProjectCostingController::class, 'destroyPlot'])->name('projects.plots.destroy');
+    Route::post('projects/{project}/seasons', [ProjectCostingController::class, 'storeSeason'])->name('projects.seasons.store');
+    Route::put('projects/{project}/seasons/{season}', [ProjectCostingController::class, 'updateSeason'])->name('projects.seasons.update');
+    Route::post('projects/{project}/seasons/{season}/status', [ProjectCostingController::class, 'seasonStatus'])->name('projects.seasons.status');
+    Route::put('projects/{project}/seasons/{season}/budget', [ProjectCostingController::class, 'budget'])->name('projects.seasons.budget');
+    Route::post('projects/{project}/costs', [ProjectCostingController::class, 'storeCost'])->name('projects.costs.store');
+    Route::put('projects/{project}/costs/{cost}', [ProjectCostingController::class, 'updateCost'])->name('projects.costs.update');
+    Route::delete('projects/{project}/costs/{cost}', [ProjectCostingController::class, 'destroyCost'])->name('projects.costs.destroy');
+    Route::post('projects/{project}/costs/{cost}/payout', [ProjectCostingController::class, 'requestPayout'])->name('projects.costs.payout');
     Route::post('projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::put('projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::post('projects/{project}/participants', [ProjectController::class, 'addParticipant'])->name('projects.participants.store');

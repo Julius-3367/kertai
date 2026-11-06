@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $project_id
  * @property int $project_item_id
+ * @property int|null $project_season_id
  * @property int|null $member_id
  * @property int $quantity
  * @property int $unit_price
@@ -72,7 +73,7 @@ class Sale extends Model
             'project_id' => $this->project_id,
             'kind' => 'sale',
             'amount' => $amount,
-            'entry_on' => now()->toDateString(),
+            'entry_on' => ($payment->received_at ?? now())->toDateString(),
             'description' => "Sale of {$this->quantity} {$this->item->unit} {$this->item->name} to {$this->buyer_name}",
             'member_id' => $this->member_id,
             'payment_id' => $payment->id,
