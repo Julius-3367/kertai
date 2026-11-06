@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $payment_id
  * @property int|null $payout_id
  * @property int|null $sale_id
+ * @property int|null $project_cost_id
  */
 class ProjectEntry extends Model
 {

@@ -123,13 +123,15 @@ it('gives rounding leftovers to the largest holder, not the highest member numbe
     expect($shares[$this->alice->id])->toBe(67)->and($shares[$this->bob->id])->toBe(33);
 });
 
-it('lets members with project access see projects but not change them', function () {
+it('lets every member follow projects but only project managers change them', function () {
     $auditor = $this->official('auditor');
 
     $this->actingAs($auditor)->get('/projects')->assertOk();
-    $this->actingAs($auditor)->get("/projects/{$this->project->id}")->assertOk()->assertInertia(fn ($p) => $p->where('canManage', false));
+    $this->actingAs($auditor)->get("/projects/{$this->project->id}")->assertOk()->assertInertia(fn ($p) => $p->where('canManage', false)->where('canManageCosts', false));
     $this->actingAs($auditor)->post('/projects', ['name' => 'X'])->assertForbidden();
-    $this->actingAs($this->alice->user)->get('/projects')->assertForbidden();
+    $this->actingAs($this->alice->user)->get('/projects')->assertOk();
+    $this->actingAs($this->alice->user)->get("/projects/{$this->project->id}")->assertOk()->assertInertia(fn ($p) => $p->where('canManage', false)->where('canManageCosts', false));
+    $this->actingAs($this->alice->user)->post("/projects/{$this->project->id}/plots", ['name' => 'X'])->assertForbidden();
 
     $this->actingAs($this->pc)->put("/projects/{$this->project->id}", [
         'name' => 'Coffee seedlings nursery', 'category' => 'crops', 'starts_on' => '2026-03-01', 'share_basis' => 'equal', 'status' => 'active',

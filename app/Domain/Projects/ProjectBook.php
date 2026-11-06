@@ -55,7 +55,7 @@ final class ProjectBook
     }
 
     /**
-     * @param  array{buyer_name: string, buyer_phone?: string|null, member_id?: int|null, quantity: int, unit_price: int, sold_on: string}  $data
+     * @param  array{project_season_id?: int|null, buyer_name: string, buyer_phone?: string|null, member_id?: int|null, quantity: int, unit_price: int, sold_on: string}  $data
      */
     public function sell(ProjectItem $item, array $data): Sale
     {
@@ -66,6 +66,7 @@ final class ProjectBook
         return DB::transaction(function () use ($item, $data) {
             $sale = Sale::create([
                 'project_id' => $item->project_id,
+                'project_season_id' => $data['project_season_id'] ?? null,
                 'project_item_id' => $item->id,
                 'member_id' => $data['member_id'] ?? null,
                 'quantity' => $data['quantity'],

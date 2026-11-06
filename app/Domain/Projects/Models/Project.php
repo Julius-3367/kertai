@@ -2,10 +2,12 @@
 
 namespace App\Domain\Projects\Models;
 
+use App\Domain\Access\Permission;
 use App\Domain\Groups\Concerns\BelongsToGroup;
 use App\Domain\Ledger\ChartOfAccounts;
 use App\Domain\Ledger\Models\Account;
 use App\Domain\Members\Models\Member;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -77,6 +79,46 @@ class Project extends Model
     public function sales(): HasMany
     {
         return $this->hasMany(Sale::class)->latest('sold_on')->latest('id');
+    }
+
+    /** @return HasMany<ProjectPlot, $this> */
+    public function plots(): HasMany
+    {
+        return $this->hasMany(ProjectPlot::class);
+    }
+
+    /** @return HasMany<ProjectSeason, $this> */
+    public function seasons(): HasMany
+    {
+        return $this->hasMany(ProjectSeason::class)->latest('starts_on')->latest('id');
+    }
+
+    /** @return HasMany<ProjectCost, $this> */
+    public function costs(): HasMany
+    {
+        return $this->hasMany(ProjectCost::class)->latest('incurred_on')->latest('id');
+    }
+
+    /**
+     * Holders of "Manage projects" run every project. The member named as a
+     * project's coordinator also keeps its land, seasons and costs.
+     */
+    public function costsManagedBy(User $user): bool
+    {
+        return $user->hasPermission(Permission::ProjectsManage->value)
+            || ($this->coordinator_member_id !== null && $user->member?->id === $this->coordinator_member_id);
+    }
+
+    /** The open season a cost or sale on this date belongs to, if any. */
+    public function seasonFor(CarbonImmutable $date): ?ProjectSeason
+    {
+        return $this->seasons()->where('status', 'open')->get()->first(fn (ProjectSeason $s) => $s->covers($date));
+    }
+
+    /** Land in use, in acres. */
+    public function acres(): float
+    {
+        return round($this->plots()->where('status', 'active')->get()->sum(fn (ProjectPlot $p) => $p->acres()), 2);
     }
 
     public function fundAccount(): Account

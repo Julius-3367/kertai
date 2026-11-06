@@ -139,7 +139,7 @@ final class AllocatePayment
                     'project_id' => $project->id,
                     'kind' => $isIncome ? 'income' : 'contribution',
                     'amount' => $amount,
-                    'entry_on' => now()->toDateString(),
+                    'entry_on' => ($payment->received_at ?? now())->toDateString(),
                     'description' => $isIncome
                         ? ($payment->meta['description'] ?? 'Income from '.($payment->payer_name ?? 'buyer'))
                         : 'Contribution from '.($member->name ?? $payment->payer_name ?? 'non-member'),

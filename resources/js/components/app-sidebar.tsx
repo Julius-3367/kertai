@@ -114,7 +114,6 @@ const sections: { label: string; items: Entry[] }[] = [
                 title: 'Projects',
                 href: '/projects',
                 icon: Sprout,
-                can: 'projects.view',
             },
             { title: 'Assets & hire', href: '/assets', icon: Tent },
         ],
